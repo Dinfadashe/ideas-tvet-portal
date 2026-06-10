@@ -7,7 +7,7 @@ import { CheckCircle, AlertCircle, Loader } from 'lucide-react'
 export default function AcceptAdmissionPage() {
   const { token } = useParams()
   const navigate = useNavigate()
-  const [status, setStatus] = useState('loading') // loading | valid | accepted | invalid | error
+  const [status, setStatus] = useState('loading')
   const [student, setStudent] = useState(null)
 
   useEffect(() => {
@@ -22,17 +22,8 @@ export default function AcceptAdmissionPage() {
         .eq('admission_token', token)
         .single()
 
-      if (error || !data) {
-        setStatus('invalid')
-        return
-      }
-
-      if (data.admission_accepted) {
-        setStatus('accepted')
-        setStudent(data)
-        return
-      }
-
+      if (error || !data) { setStatus('invalid'); return }
+      if (data.admission_accepted) { setStatus('accepted'); setStudent(data); return }
       setStudent(data)
       setStatus('valid')
     } catch (err) {
@@ -51,9 +42,7 @@ export default function AcceptAdmissionPage() {
           status: 'admitted',
         })
         .eq('admission_token', token)
-
       if (error) throw error
-
       setStatus('accepted')
       toast.success('Admission accepted! You can now log in to your portal.')
     } catch (err) {
@@ -66,15 +55,7 @@ export default function AcceptAdmissionPage() {
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: 520 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 20 }}>
-            <div style={{ width: 40, height: 40, background: '#0a1628', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 12, color: 'white' }}>WA</span>
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, color: '#0a1628' }}>WEB3.0 ALLIANCE LTD</div>
-              <div style={{ fontSize: 11, color: '#64748b' }}>IDEAS-TVET INITIATIVE</div>
-            </div>
-          </div>
+          <img src="/logo.png" alt="Web3.0 Alliance Logo" style={{ height: 56, width: 'auto', objectFit: 'contain' }} />
         </div>
 
         {status === 'loading' && (
@@ -91,7 +72,9 @@ export default function AcceptAdmissionPage() {
             <p style={{ color: '#64748b', fontSize: 14, marginBottom: 20 }}>
               This admission link is invalid or has expired. Please contact your program coordinator.
             </p>
-            <p style={{ fontSize: 13, color: '#94a3b8' }}>Email: <a href="mailto:official@theweb3alliance.org" style={{ color: '#2db84b' }}>official@theweb3alliance.org</a></p>
+            <p style={{ fontSize: 13, color: '#94a3b8' }}>
+              Email: <a href="mailto:official@theweb3alliance.org" style={{ color: '#2db84b' }}>official@theweb3alliance.org</a>
+            </p>
           </div>
         )}
 
@@ -112,11 +95,7 @@ export default function AcceptAdmissionPage() {
                 3. Complete your profile information.
               </p>
             </div>
-            <button
-              className="btn btn-primary btn-lg"
-              style={{ width: '100%' }}
-              onClick={() => navigate('/login')}
-            >
+            <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={() => navigate('/login')}>
               Go to Student Portal
             </button>
           </div>
@@ -160,11 +139,7 @@ export default function AcceptAdmissionPage() {
               ⚠️ By accepting, you confirm your commitment to attend and complete the program.
             </div>
 
-            <button
-              className="btn btn-primary btn-lg"
-              style={{ width: '100%' }}
-              onClick={acceptAdmission}
-            >
+            <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={acceptAdmission}>
               ✓ Accept Admission Offer
             </button>
 

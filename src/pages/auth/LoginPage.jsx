@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.jsx'
+import { supabase } from '../../lib/supabase.js'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
 
@@ -18,8 +19,21 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      await signIn(email, password)
-      // Navigation handled by App.jsx auth state
+      const { user } = await signIn(email, password)
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, password_changed')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile?.password_changed) {
+        navigate('/change-password')
+      } else if (profile?.role === 'admin') {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
       toast.error(err.message || 'Invalid email or password.')
     } finally {
@@ -46,13 +60,7 @@ export default function LoginPage() {
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">
-            <div className="auth-logo-icon">
-              <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 13 }}>WA</span>
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 14, color: '#0a1628' }}>WEB3.0 ALLIANCE</div>
-              <div style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.3px' }}>IDEAS-TVET INITIATIVE</div>
-            </div>
+            <img src="/logo.png" alt="Web3.0 Alliance Logo" style={{ height: 56, width: 'auto', objectFit: 'contain' }} />
           </div>
           <h1>{forgotMode ? 'Reset Password' : 'Welcome Back'}</h1>
           <p>{forgotMode

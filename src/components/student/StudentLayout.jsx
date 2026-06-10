@@ -49,7 +49,7 @@ export default function StudentLayout() {
       <nav className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <div className="logo-badge">
-            <div className="logo-icon">WA</div>
+            <img src="/logo.png" alt="Web3.0 Alliance Logo" style={{ height: 38, width: 'auto', objectFit: 'contain', background: 'white', borderRadius: 6, padding: '3px 6px', flexShrink: 0 }} />
             <div className="logo-text">
               <span>IDEAS-TVET</span>
               <span>Student Portal</span>

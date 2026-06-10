@@ -31,7 +31,6 @@ export default function AdminLayout() {
 
   return (
     <div className="app-layout">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }}
@@ -39,11 +38,10 @@ export default function AdminLayout() {
         />
       )}
 
-      {/* Sidebar */}
       <nav className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <div className="logo-badge">
-            <div className="logo-icon">WA</div>
+            <img src="/logo.png" alt="Web3.0 Alliance Logo" style={{ height: 38, width: 'auto', objectFit: 'contain', background: 'white', borderRadius: 6, padding: '3px 6px', flexShrink: 0 }} />
             <div className="logo-text">
               <span>IDEAS-TVET</span>
               <span>Admin Portal</span>
@@ -70,7 +68,7 @@ export default function AdminLayout() {
         <div className="sidebar-footer">
           <div style={{ padding: '8px 12px', marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 2 }}>Signed in as</div>
-            <div style={{ fontSize: 13, color: 'white', fontWeight: 600, truncate: true }}>{profile?.full_name}</div>
+            <div style={{ fontSize: 13, color: 'white', fontWeight: 600 }}>{profile?.full_name}</div>
             <div style={{ fontSize: 11, color: '#64748b' }}>Administrator</div>
           </div>
           <button className="nav-link" onClick={handleSignOut} style={{ color: '#f87171', width: '100%' }}>
@@ -80,7 +78,6 @@ export default function AdminLayout() {
         </div>
       </nav>
 
-      {/* Main content */}
       <div className="main-content">
         <header className="topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -91,19 +88,14 @@ export default function AdminLayout() {
             >
               <Menu size={20} />
             </button>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 12, color: '#64748b' }}>IDEAS-TVET</span>
-                <span style={{ fontSize: 12, color: '#cbd5e1' }}>›</span>
-                <span style={{ fontSize: 12, color: '#334155', fontWeight: 500 }}>Admin</span>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: '#64748b' }}>IDEAS-TVET</span>
+              <span style={{ fontSize: 12, color: '#cbd5e1' }}>›</span>
+              <span style={{ fontSize: 12, color: '#334155', fontWeight: 500 }}>Admin</span>
             </div>
           </div>
           <div className="topbar-right">
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: '#f1f5f9', borderRadius: 8, padding: '6px 12px', fontSize: 13
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 8, padding: '6px 12px', fontSize: 13 }}>
               <div style={{ width: 28, height: 28, background: '#0a1628', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 700 }}>
                 {profile?.full_name?.charAt(0) || 'A'}
               </div>
