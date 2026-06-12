@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase.js'
+import { sendInternshipEmail, sendAdmissionLetter } from '../../lib/email.js'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Mail, Save, Briefcase, GraduationCap, UserX, RefreshCw, Copy, ExternalLink } from 'lucide-react'
 
@@ -12,6 +13,7 @@ export default function AdminStudentDetail() {
   const [student, setStudent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [sendingLetter, setSendingLetter] = useState(false)
   const [status, setStatus] = useState('')
   const [documents, setDocuments] = useState([])
   const [logbookProgress, setLogbookProgress] = useState({ total: 0, filled: 0 })
@@ -78,6 +80,14 @@ export default function AdminStudentDetail() {
           message: 'You have been marked as an intern. Your logbook is now available. Download your internship letter from the Documents section.',
         })
         toast.success('Student marked as intern. Logbook created.')
+
+        // Send internship activation email (non-blocking)
+        sendInternshipEmail({
+          full_name: student.full_name,
+          email: student.email,
+          student_id: id,
+          internship_started_at: updates.internship_started_at,
+        }).catch(err => console.warn('Internship email failed:', err.message))
       }
 
       await supabase.from('profiles').update(updates).eq('id', id)
@@ -88,6 +98,27 @@ export default function AdminStudentDetail() {
       toast.error('Failed to update status: ' + err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleSendAdmissionLetter() {
+    if (!student.id_number) {
+      toast.error('This student has no ID number assigned yet. Run the SQL migration first.')
+      return
+    }
+    setSendingLetter(true)
+    try {
+      await sendAdmissionLetter({
+        full_name: student.full_name,
+        email: student.email,
+        id_number: student.id_number,
+        student_id: student.id,
+      })
+      toast.success(`Admission letter sent to ${student.email}`)
+    } catch (err) {
+      toast.error('Failed to send letter: ' + err.message)
+    } finally {
+      setSendingLetter(false)
     }
   }
 
@@ -258,6 +289,19 @@ export default function AdminStudentDetail() {
                 onClick={resendAdmissionLink}
               >
                 <Copy size={13} /> Copy Admission Link
+              </button>
+
+              <button
+                className="btn btn-primary"
+                style={{ width: '100%', fontSize: 13, marginTop: 8 }}
+                onClick={handleSendAdmissionLetter}
+                disabled={sendingLetter || !student.id_number}
+                title={!student.id_number ? 'No ID number assigned' : ''}
+              >
+                {sendingLetter
+                  ? <><div className="spinner" /> Sending...</>
+                  : <><Mail size={13} /> Send Admission Letter</>
+                }
               </button>
             </div>
           </div>

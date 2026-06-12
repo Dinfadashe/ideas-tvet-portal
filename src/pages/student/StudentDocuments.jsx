@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth.jsx'
 import { supabase } from '../../lib/supabase.js'
 import toast from 'react-hot-toast'
 import { Download, Upload, FileText, CheckCircle, Loader, Lock } from 'lucide-react'
+import AdmissionLetterDownload from '../../components/AdmissionLetterDownload.jsx'
 
 export default function StudentDocuments() {
   const { profile } = useAuth()
@@ -256,6 +257,31 @@ export default function StudentDocuments() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+
+        {/* Admission Letter Download */}
+        {profile?.id_number && (
+          <div className="card">
+            <div className="card-header">
+              <h2>Admission Letter</h2>
+              <span className="badge badge-green">Available</span>
+            </div>
+            <div className="card-body">
+              <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                <div style={{ width: 64, height: 64, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                  <FileText size={28} color="#1d4ed8" />
+                </div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
+                  Official Admission Letter
+                </div>
+                <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>
+                  Your trainee ID: <strong style={{ color: '#0a1628', fontFamily: 'monospace' }}>{profile.id_number}</strong>
+                </div>
+              </div>
+              <AdmissionLetterDownload profile={profile} />
+            </div>
+          </div>
+        )}
+
         {/* Internship Letter */}
         <div className="card">
           <div className="card-header">

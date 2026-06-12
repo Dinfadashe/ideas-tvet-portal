@@ -266,6 +266,7 @@ export default function StudentDashboard() {
               ['Duration', 'Minimum 6 months'],
               ['Funded By', 'World Bank / Federal Ministry of Education'],
               ['Implementing Partner', 'Web3.0 Alliance Ltd'],
+              ['Your Trainee ID', profile?.id_number || 'Pending assignment'],
               ['Support Email', 'official@theweb3alliance.org'],
             ].map(([label, val]) => (
               <div key={label}>

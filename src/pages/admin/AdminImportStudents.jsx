@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase.js'
+import { sendAdmissionEmail, sendAdmissionLetter } from '../../lib/email.js'
 import toast from 'react-hot-toast'
-import { Upload, Download, CheckCircle, AlertCircle, Loader } from 'lucide-react'
+import { Upload, Download, AlertCircle, Mail } from 'lucide-react'
 
-const REQUIRED_HEADERS = ['full_name', 'email', 'phone']
+// Only email is required — everything else students fill in themselves
+const REQUIRED_HEADERS = ['email']
 
 function generatePassword() {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -54,28 +56,28 @@ export default function AdminImportStudents() {
 
     for (const row of parsed) {
       try {
-        if (!row.email || !row.full_name) {
-          fail.push({ email: row.email || '(no email)', reason: 'Missing required fields' })
+        const email = row.email?.toLowerCase().trim()
+        if (!email) {
+          fail.push({ email: '(no email)', reason: 'Email is required' })
           continue
         }
+
+        // Use full_name from CSV if provided, otherwise derive from email
+        const fullName = row.full_name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
         const password = generatePassword()
         const token = crypto.randomUUID()
 
         // Create Supabase auth user
-        const { data: authData, error: authError } = await supabase.auth.admin
-          ? // Admin API (if using service role key in edge functions)
-          { data: null, error: { message: 'Use service role in Edge Function' } }
-          : await supabase.auth.signUp({
-            email: row.email.toLowerCase().trim(),
-            password,
-            options: { emailRedirectTo: null },
-          })
+        const { data: authData } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: null },
+        })
 
-        // Create profile directly (works with RLS bypass for admin)
         const profilePayload = {
-          email: row.email.toLowerCase().trim(),
-          full_name: row.full_name.trim(),
+          email,
+          full_name: fullName,
           phone: row.phone || null,
           gender: row.gender || null,
           state_of_origin: row.state_of_origin || null,
@@ -87,27 +89,24 @@ export default function AdminImportStudents() {
           password_changed: false,
         }
 
-        // If auth succeeded, link profile to auth user
         if (authData?.user) {
           profilePayload.id = authData.user.id
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert(profilePayload)
-
           if (profileError) throw profileError
         } else {
           // Fallback: check if profile already exists
           const { data: existing } = await supabase
             .from('profiles')
             .select('id')
-            .eq('email', row.email.toLowerCase().trim())
+            .eq('email', email)
             .single()
 
           if (existing) {
-            fail.push({ email: row.email, reason: 'Email already exists' })
+            fail.push({ email, reason: 'Email already exists' })
             continue
           }
-          // If no auth service key, create profile with generated UUID
           profilePayload.id = crypto.randomUUID()
           const { error: profileError } = await supabase
             .from('profiles')
@@ -116,15 +115,25 @@ export default function AdminImportStudents() {
         }
 
         const admissionLink = `${import.meta.env.VITE_APP_URL}/admit/${token}`
-        ok.push({ name: row.full_name, email: row.email, password, admissionLink })
+        const studentId = authData?.user?.id || profilePayload.id
 
-        // Log email for dispatch
-        await supabase.from('email_logs').insert({
-          student_id: null,
-          email_to: row.email,
-          subject: 'Your IDEAS-TVET Admission Offer',
-          status: 'pending',
-        })
+        // Fetch the assigned id_number back from DB
+        const { data: createdProfile } = await supabase
+          .from('profiles')
+          .select('id_number')
+          .eq('email', email)
+          .single()
+
+        ok.push({ name: fullName, email, password, admissionLink, student_id: studentId, id_number: createdProfile?.id_number || null })
+
+        // Send admission email via Resend (non-blocking — don't fail the import if email fails)
+        sendAdmissionEmail({
+          full_name: fullName,
+          email,
+          admission_link: admissionLink,
+          temp_password: password,
+          student_id: authData?.user?.id || null,
+        }).catch(err => console.warn('Email send failed for', email, err.message))
 
       } catch (err) {
         fail.push({ email: row.email || '(unknown)', reason: err.message })
@@ -134,16 +143,12 @@ export default function AdminImportStudents() {
     setResults({ ok, fail })
     setImporting(false)
 
-    if (ok.length) {
-      toast.success(`${ok.length} student(s) imported successfully!`)
-    }
-    if (fail.length) {
-      toast.error(`${fail.length} student(s) failed to import.`)
-    }
+    if (ok.length) toast.success(`${ok.length} student(s) imported successfully!`)
+    if (fail.length) toast.error(`${fail.length} student(s) failed to import.`)
   }
 
   function downloadTemplate() {
-    const csv = 'full_name,email,phone,gender,state_of_origin,lga\nJohn Doe,john@example.com,08012345678,Male,Plateau,Jos North\nJane Smith,jane@example.com,08098765432,Female,Lagos,Ikeja'
+    const csv = 'email,full_name,phone,gender,state_of_origin,lga\njohn@example.com,John Doe,08012345678,Male,Plateau,Jos North\njane@example.com,,,,,'
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -153,7 +158,34 @@ export default function AdminImportStudents() {
     URL.revokeObjectURL(url)
   }
 
-  function downloadResults() {
+  const [sendingLetters, setSendingLetters] = useState({})
+
+  async function handleSendLetter(student) {
+    if (!student.id_number) { toast.error('No ID number for ' + student.email); return }
+    setSendingLetters(prev => ({ ...prev, [student.email]: true }))
+    try {
+      await sendAdmissionLetter({
+        full_name: student.name,
+        email: student.email,
+        id_number: student.id_number,
+        student_id: student.student_id,
+      })
+      toast.success(`Admission letter sent to ${student.email}`)
+    } catch (err) {
+      toast.error('Failed: ' + err.message)
+    } finally {
+      setSendingLetters(prev => ({ ...prev, [student.email]: false }))
+    }
+  }
+
+  async function handleSendAllLetters() {
+    const students = results?.ok?.filter(s => s.id_number) || []
+    if (!students.length) { toast.error('No students with ID numbers to send to'); return }
+    toast.success(`Sending ${students.length} admission letters...`)
+    for (const s of students) {
+      await handleSendLetter(s).catch(() => {})
+    }
+  }
     if (!results) return
     const rows = [
       ['Name', 'Email', 'Temporary Password', 'Admission Link', 'Status'],
@@ -174,7 +206,7 @@ export default function AdminImportStudents() {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 800, color: '#0a1628' }}>Import Trainees</h1>
         <p style={{ color: '#64748b', fontSize: 13 }}>
-          Upload a CSV file to bulk-create student accounts. Accounts will be created with temporary passwords.
+          Upload a CSV file to bulk-create student accounts. Only email is required — students fill in other details themselves.
         </p>
       </div>
 
@@ -189,8 +221,8 @@ export default function AdminImportStudents() {
         <div className="card-body">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             {[
-              { step: '1', title: 'Download Template', desc: 'Get the CSV template with required columns.' },
-              { step: '2', title: 'Fill Student Data', desc: 'Add student names, emails, and phones.' },
+              { step: '1', title: 'Download Template', desc: 'Get the CSV template. Only the email column is required.' },
+              { step: '2', title: 'Fill Student Emails', desc: 'Add emails. Full name, phone etc. are optional.' },
               { step: '3', title: 'Upload & Import', desc: 'Upload the filled CSV and click Import.' },
               { step: '4', title: 'Download Results', desc: 'Save passwords and admission links for dispatch.' },
             ].map(s => (
@@ -205,11 +237,11 @@ export default function AdminImportStudents() {
               </div>
             ))}
           </div>
-          <div className="alert alert-warning" style={{ marginTop: 16, marginBottom: 0 }}>
-            <span>⚠️</span>
+          <div className="alert alert-info" style={{ marginTop: 16, marginBottom: 0 }}>
+            <span>ℹ️</span>
             <span style={{ fontSize: 13 }}>
-              <strong>Required columns:</strong> full_name, email, phone. Optional: gender, state_of_origin, lga.
-              After import, download the results CSV containing passwords and admission links to send to students.
+              <strong>Required:</strong> email only. <strong>Optional:</strong> full_name, phone, gender, state_of_origin, lga.
+              If full_name is omitted, it will be derived from the email address. Students complete their profiles on first login.
             </span>
           </div>
         </div>
@@ -259,11 +291,7 @@ export default function AdminImportStudents() {
         <div className="card" style={{ marginBottom: 20 }}>
           <div className="card-header">
             <h2>Preview — {parsed.length} rows</h2>
-            <button
-              className="btn btn-primary"
-              onClick={handleImport}
-              disabled={importing}
-            >
+            <button className="btn btn-primary" onClick={handleImport} disabled={importing}>
               {importing ? <><div className="spinner" />Importing...</> : `Import ${parsed.length} Students`}
             </button>
           </div>
@@ -272,8 +300,8 @@ export default function AdminImportStudents() {
               <thead>
                 <tr>
                   <th>Row</th>
-                  <th>Name</th>
                   <th>Email</th>
+                  <th>Name (optional)</th>
                   <th>Phone</th>
                   <th>Gender</th>
                   <th>State</th>
@@ -283,11 +311,11 @@ export default function AdminImportStudents() {
                 {parsed.slice(0, 10).map(row => (
                   <tr key={row._row}>
                     <td style={{ color: '#94a3b8', fontSize: 12 }}>{row._row}</td>
-                    <td style={{ fontWeight: 500 }}>{row.full_name}</td>
-                    <td style={{ color: '#64748b', fontSize: 13 }}>{row.email}</td>
-                    <td style={{ color: '#64748b', fontSize: 13 }}>{row.phone}</td>
-                    <td>{row.gender}</td>
-                    <td>{row.state_of_origin}</td>
+                    <td style={{ fontWeight: 500 }}>{row.email}</td>
+                    <td style={{ color: '#64748b', fontSize: 13 }}>{row.full_name || <span style={{ color: '#cbd5e1', fontStyle: 'italic' }}>auto</span>}</td>
+                    <td style={{ color: '#64748b', fontSize: 13 }}>{row.phone || '—'}</td>
+                    <td style={{ color: '#64748b', fontSize: 13 }}>{row.gender || '—'}</td>
+                    <td style={{ color: '#64748b', fontSize: 13 }}>{row.state_of_origin || '—'}</td>
                   </tr>
                 ))}
                 {parsed.length > 10 && (
@@ -308,9 +336,14 @@ export default function AdminImportStudents() {
         <div className="card">
           <div className="card-header">
             <h2>Import Results</h2>
-            <button className="btn btn-primary btn-sm" onClick={downloadResults}>
-              <Download size={13} /> Download Results CSV
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-primary btn-sm" onClick={handleSendAllLetters}>
+                <Mail size={13} /> Send All Letters
+              </button>
+              <button className="btn btn-outline btn-sm" onClick={downloadResults}>
+                <Download size={13} /> Download CSV
+              </button>
+            </div>
           </div>
           <div className="card-body">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
@@ -323,6 +356,29 @@ export default function AdminImportStudents() {
                 <div style={{ fontSize: 13, color: results.fail.length ? '#b91c1c' : '#94a3b8' }}>Failed</div>
               </div>
             </div>
+
+            {results.ok.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#15803d', marginBottom: 8 }}>Successfully imported:</div>
+                {results.ok.map((s, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f1f5f9', fontSize: 13 }}>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontWeight: 500, color: '#1e293b' }}>{s.name}</span>
+                      <span style={{ color: '#94a3b8', marginLeft: 8 }}>{s.email}</span>
+                      {s.id_number && <span style={{ background: '#0a1628', color: '#f5a623', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, marginLeft: 8 }}>{s.id_number}</span>}
+                    </div>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ fontSize: 11, padding: '4px 12px' }}
+                      onClick={() => handleSendLetter(s)}
+                      disabled={sendingLetters[s.email] || !s.id_number}
+                    >
+                      {sendingLetters[s.email] ? <div className="spinner" style={{ width: 10, height: 10 }} /> : <><Mail size={11} /> Send Letter</>}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {results.fail.length > 0 && (
               <div>
