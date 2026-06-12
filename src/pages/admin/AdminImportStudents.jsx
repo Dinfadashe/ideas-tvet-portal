@@ -4,8 +4,8 @@ import { sendAdmissionEmail, sendAdmissionLetter } from '../../lib/email.js'
 import toast from 'react-hot-toast'
 import { Upload, Download, AlertCircle, Mail } from 'lucide-react'
 
-// Only email is required — everything else students fill in themselves
-const REQUIRED_HEADERS = ['email']
+// Email and full_name are required — everything else students fill in themselves
+const REQUIRED_HEADERS = ['email', 'full_name']
 
 function generatePassword() {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -62,8 +62,11 @@ export default function AdminImportStudents() {
           continue
         }
 
-        // Use full_name from CSV if provided, otherwise derive from email
-        const fullName = row.full_name?.trim() || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        const fullName = row.full_name?.trim()
+        if (!fullName) {
+          fail.push({ email, reason: 'Full name is required' })
+          continue
+        }
 
         const password = generatePassword()
         const token = crypto.randomUUID()
@@ -148,7 +151,7 @@ export default function AdminImportStudents() {
   }
 
   function downloadTemplate() {
-    const csv = 'email,full_name,phone,gender,state_of_origin,lga\njohn@example.com,John Doe,08012345678,Male,Plateau,Jos North\njane@example.com,,,,,'
+    const csv = 'email,full_name,phone,gender,state_of_origin,lga\njohn@example.com,John Doe,08012345678,Male,Plateau,Jos North\njane@example.com,Jane Smith,,,,'
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -208,7 +211,7 @@ export default function AdminImportStudents() {
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 800, color: '#0a1628' }}>Import Trainees</h1>
         <p style={{ color: '#64748b', fontSize: 13 }}>
-          Upload a CSV file to bulk-create student accounts. Only email is required — students fill in other details themselves.
+          Upload a CSV file to bulk-create student accounts. Email and full name are required — students fill in other details themselves.
         </p>
       </div>
 
@@ -223,8 +226,8 @@ export default function AdminImportStudents() {
         <div className="card-body">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             {[
-              { step: '1', title: 'Download Template', desc: 'Get the CSV template. Only the email column is required.' },
-              { step: '2', title: 'Fill Student Emails', desc: 'Add emails. Full name, phone etc. are optional.' },
+              { step: '1', title: 'Download Template', desc: 'Get the CSV template. Email and full name are required.' },
+              { step: '2', title: 'Fill Student Details', desc: 'Add emails and full names. Phone etc. are optional.' },
               { step: '3', title: 'Upload & Import', desc: 'Upload the filled CSV and click Import.' },
               { step: '4', title: 'Download Results', desc: 'Save passwords and admission links for dispatch.' },
             ].map(s => (
@@ -242,8 +245,8 @@ export default function AdminImportStudents() {
           <div className="alert alert-info" style={{ marginTop: 16, marginBottom: 0 }}>
             <span>ℹ️</span>
             <span style={{ fontSize: 13 }}>
-              <strong>Required:</strong> email only. <strong>Optional:</strong> full_name, phone, gender, state_of_origin, lga.
-              If full_name is omitted, it will be derived from the email address. Students complete their profiles on first login.
+              <strong>Required:</strong> email, full_name. <strong>Optional:</strong> phone, gender, state_of_origin, lga.
+              Students complete their remaining profile details on first login.
             </span>
           </div>
         </div>
@@ -302,8 +305,8 @@ export default function AdminImportStudents() {
               <thead>
                 <tr>
                   <th>Row</th>
-                  <th>Email</th>
-                  <th>Name (optional)</th>
+                  <th>Email *</th>
+                  <th>Full Name *</th>
                   <th>Phone</th>
                   <th>Gender</th>
                   <th>State</th>
@@ -314,7 +317,9 @@ export default function AdminImportStudents() {
                   <tr key={row._row}>
                     <td style={{ color: '#94a3b8', fontSize: 12 }}>{row._row}</td>
                     <td style={{ fontWeight: 500 }}>{row.email}</td>
-                    <td style={{ color: '#64748b', fontSize: 13 }}>{row.full_name || <span style={{ color: '#cbd5e1', fontStyle: 'italic' }}>auto</span>}</td>
+                    <td style={{ fontSize: 13, fontWeight: row.full_name ? 600 : 400, color: row.full_name ? '#1e293b' : '#ef4444' }}>
+                      {row.full_name || <span>⚠ Missing</span>}
+                    </td>
                     <td style={{ color: '#64748b', fontSize: 13 }}>{row.phone || '—'}</td>
                     <td style={{ color: '#64748b', fontSize: 13 }}>{row.gender || '—'}</td>
                     <td style={{ color: '#64748b', fontSize: 13 }}>{row.state_of_origin || '—'}</td>
