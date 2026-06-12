@@ -51,7 +51,7 @@ export default function StudentDocuments() {
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(9)
       doc.text('131 Angwan Dabba Bukuru, Jos, Plateau State', margin, 23)
-      doc.text('Email: official@theweb3alliance.org | Website: www.theweb3alliance.org', margin, 29)
+      doc.text('Email: ideas@theweb3alliance.org | Website: www.theweb3alliance.org', margin, 29)
 
       // Green accent bar
       doc.setFillColor(45, 184, 75)
@@ -124,7 +124,7 @@ export default function StudentDocuments() {
         'guidance, supervision, and a conducive learning environment throughout the internship period.',
         '',
         'All interns are covered under the program welfare framework. For enquiries or verification,',
-        'please contact: official@theweb3alliance.org or call our office.',
+        'please contact: ideas@theweb3alliance.org or call our office.',
       ]
 
       lines.forEach(line => {

@@ -116,7 +116,7 @@ function admissionEmailHtml({ full_name, admission_link, temp_password, email })
           <div style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;">
             Web3.0 Alliance Limited | IDEAS-TVET Initiative<br>
             131 Angwan Dabba Bukuru, Jos, Plateau State<br>
-            <a href="mailto:official@theweb3alliance.org" style="color:#2db84b;text-decoration:none;">official@theweb3alliance.org</a> | 
+            <a href="mailto:ideas@theweb3alliance.org" style="color:#2db84b;text-decoration:none;">ideas@theweb3alliance.org</a> | 
             <a href="${APP_URL}" style="color:#2db84b;text-decoration:none;">ideas.theweb3alliance.org</a>
           </div>
           <div style="margin-top:12px;font-size:11px;color:rgba(255,255,255,0.25);">
@@ -193,7 +193,7 @@ function internshipEmailHtml({ full_name, start_date, end_date, portal_url }) {
                 <strong>Important reminders:</strong><br>
                 • Fill your logbook entry every working day<br>
                 • Download and present your internship letter to your host organisation<br>
-                • Contact your coordinator for any issues: <a href="mailto:official@theweb3alliance.org" style="color:#15803d;">official@theweb3alliance.org</a>
+                • Contact your coordinator for any issues: <a href="mailto:ideas@theweb3alliance.org" style="color:#15803d;">ideas@theweb3alliance.org</a>
               </div>
             </td></tr>
           </table>
@@ -203,7 +203,7 @@ function internshipEmailHtml({ full_name, start_date, end_date, portal_url }) {
         <tr><td style="background:#0a1628;padding:24px 40px;text-align:center;">
           <div style="color:rgba(255,255,255,0.5);font-size:12px;line-height:1.8;">
             Web3.0 Alliance Limited | IDEAS-TVET Initiative<br>
-            <a href="mailto:official@theweb3alliance.org" style="color:#2db84b;text-decoration:none;">official@theweb3alliance.org</a>
+            <a href="mailto:ideas@theweb3alliance.org" style="color:#2db84b;text-decoration:none;">ideas@theweb3alliance.org</a>
           </div>
         </td></tr>
 
@@ -232,6 +232,7 @@ async function updateEmailLog(logId, status) {
 // ─── Main Handler ─────────────────────────────────────────────────────────────
 
 export const handler = async (event) => {
+  // CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -265,10 +266,11 @@ export const handler = async (event) => {
 
   const { type, data, log_id } = body
 
-  try {
-    let emailPayload = null
+  let emailPayload = null
 
+  try {
     if (type === 'admission') {
+      // data: { full_name, email, admission_link, temp_password }
       emailPayload = {
         from: `IDEAS-TVET Portal <${FROM_EMAIL}>`,
         to: [data.email],
@@ -276,6 +278,7 @@ export const handler = async (event) => {
         html: admissionEmailHtml(data),
       }
     } else if (type === 'internship_started') {
+      // data: { full_name, email, start_date, end_date }
       emailPayload = {
         from: `IDEAS-TVET Portal <${FROM_EMAIL}>`,
         to: [data.email],

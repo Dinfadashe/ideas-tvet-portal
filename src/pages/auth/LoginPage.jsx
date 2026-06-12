@@ -161,7 +161,7 @@ export default function LoginPage() {
         <div style={{ marginTop: 28, padding: '16px', background: '#f1f5f9', borderRadius: 10, textAlign: 'center' }}>
           <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
             Access to this portal is by invitation only.<br />
-            Contact <strong style={{ color: '#0a1628' }}>official@theweb3alliance.org</strong> for support.
+            Contact <strong style={{ color: '#0a1628' }}>ideas@theweb3alliance.org</strong> for support.
           </p>
         </div>
       </div>

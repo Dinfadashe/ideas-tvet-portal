@@ -73,7 +73,7 @@ export default function AcceptAdmissionPage() {
               This admission link is invalid or has expired. Please contact your program coordinator.
             </p>
             <p style={{ fontSize: 13, color: '#94a3b8' }}>
-              Email: <a href="mailto:official@theweb3alliance.org" style={{ color: '#2db84b' }}>official@theweb3alliance.org</a>
+              Email: <a href="mailto:ideas@theweb3alliance.org" style={{ color: '#2db84b' }}>ideas@theweb3alliance.org</a>
             </p>
           </div>
         )}

@@ -243,7 +243,7 @@ function admissionLetterHtml({ full_name, id_number, email, issued_date }) {
           <td style="background:#0a1628;padding:16px 32px;text-align:center;">
             <div style="color:rgba(255,255,255,0.45);font-size:10px;font-family:Arial,sans-serif;line-height:1.8;">
               Web3.0 Alliance Limited &nbsp;|&nbsp; 131 Angwan Dabba Bukuru, Jos, Plateau State<br>
-              <a href="mailto:official@theweb3alliance.org" style="color:#2db84b;text-decoration:none;">official@theweb3alliance.org</a>
+              <a href="mailto:ideas@theweb3alliance.org" style="color:#2db84b;text-decoration:none;">ideas@theweb3alliance.org</a>
               &nbsp;|&nbsp;
               <a href="https://theweb3alliance.org" style="color:#2db84b;text-decoration:none;">theweb3alliance.org</a><br>
               <span style="color:rgba(255,255,255,0.25);font-size:9px;">

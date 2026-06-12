@@ -230,7 +230,7 @@ export default function AdmissionLetterDownload({ profile }) {
           <div style={{ background: '#0a1628', padding: '14px 32px', textAlign: 'center' }}>
             <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, lineHeight: 1.8 }}>
               Web3.0 Alliance Limited | 131 Angwan Dabba Bukuru, Jos, Plateau State<br />
-              official@theweb3alliance.org | theweb3alliance.org<br />
+              ideas@theweb3alliance.org | theweb3alliance.org<br />
               <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>
                 Contract: IDEAS-TVET2/NPCU/PLATEAU/05.26/304 | Funded by The World Bank (IDA: 166239)
               </span>

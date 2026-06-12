@@ -141,7 +141,7 @@ export default function LandingPage() {
                 >
                   Access Trainee Portal →
                 </button>
-                <a href="mailto:official@theweb3alliance.org" style={btnGhost}
+                <a href="mailto:ideas@theweb3alliance.org" style={btnGhost}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
                 >
@@ -379,7 +379,7 @@ export default function LandingPage() {
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#2db84b', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 16 }}>Contact</div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 2 }}>
-                <div>📧 <a href="mailto:official@theweb3alliance.org" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>official@theweb3alliance.org</a></div>
+                <div>📧 <a href="mailto:ideas@theweb3alliance.org" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>ideas@theweb3alliance.org</a></div>
                 <div>📍 131 Angwan Dabba Bukuru, Jos</div>
                 <div>🌐 <a href="https://www.theweb3alliance.org" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>theweb3alliance.org</a></div>
               </div>

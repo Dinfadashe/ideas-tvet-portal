@@ -267,7 +267,7 @@ export default function StudentDashboard() {
               ['Funded By', 'World Bank / Federal Ministry of Education'],
               ['Implementing Partner', 'Web3.0 Alliance Ltd'],
               ['Your Trainee ID', profile?.id_number || 'Pending assignment'],
-              ['Support Email', 'official@theweb3alliance.org'],
+              ['Support Email', 'ideas@theweb3alliance.org'],
             ].map(([label, val]) => (
               <div key={label}>
                 <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 3 }}>{label}</div>
