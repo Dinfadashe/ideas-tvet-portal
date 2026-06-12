@@ -18,15 +18,38 @@ export default function AdminImportStudents() {
   const fileRef = useRef()
 
   function parseCSV(text) {
-    const lines = text.trim().split('\n')
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'))
+    // Normalize line endings (Windows \r\n → \n)
+    const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    const lines = normalized.trim().split('\n').filter(l => l.trim())
+
+    // Robust field parser — handles quoted fields with commas inside
+    function parseLine(line) {
+      const fields = []
+      let current = ''
+      let inQuotes = false
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i]
+        if (ch === '"' || ch === "'") {
+          inQuotes = !inQuotes
+        } else if (ch === ',' && !inQuotes) {
+          fields.push(current.trim())
+          current = ''
+        } else {
+          current += ch
+        }
+      }
+      fields.push(current.trim())
+      return fields
+    }
+
+    const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''))
     const missing = REQUIRED_HEADERS.filter(h => !headers.includes(h))
     if (missing.length) {
-      setErrors([`Missing required columns: ${missing.join(', ')}`])
+      setErrors([`Missing required columns: ${missing.join(', ')}. Found columns: ${headers.join(', ')}`])
       return []
     }
     return lines.slice(1).filter(l => l.trim()).map((line, i) => {
-      const vals = line.split(',').map(v => v.trim().replace(/^["']|["']$/g, ''))
+      const vals = parseLine(line)
       return headers.reduce((obj, h, j) => { obj[h] = vals[j] || ''; return obj }, { _row: i + 2 })
     })
   }
