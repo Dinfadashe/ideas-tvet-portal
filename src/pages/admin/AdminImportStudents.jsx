@@ -81,6 +81,7 @@ export default function AdminImportStudents() {
       for (let i = 0; i < parsed.length; i += CHUNK_SIZE) {
         const chunk = parsed.slice(i, i + CHUNK_SIZE)
 
+        console.log('Sending chunk to server:', JSON.stringify(chunk.slice(0, 2)))
         const res = await fetch('/.netlify/functions/import-students', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -93,6 +94,7 @@ export default function AdminImportStudents() {
         }
 
         const result = await res.json()
+        console.log('Server version:', result.version)
         const { ok, fail } = result
         allOk.push(...ok)
         allFail.push(...fail)

@@ -6,6 +6,8 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const APP_URL = process.env.VITE_APP_URL || 'https://ideas.theweb3alliance.org'
 
+const FUNCTION_VERSION = 'v4-crlf-fix'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
@@ -163,14 +165,6 @@ export const handler = async (event) => {
   return {
     statusCode: 200,
     headers: corsHeaders,
-    body: JSON.stringify({ 
-      ok, 
-      fail,
-      _debug: {
-        first_row_keys: rows[0] ? Object.keys(rows[0]) : [],
-        first_row_values: rows[0] ? Object.values(rows[0]) : [],
-        total_rows: rows.length
-      }
-    }),
+    body: JSON.stringify({ ok, fail, version: FUNCTION_VERSION }),
   }
 }
