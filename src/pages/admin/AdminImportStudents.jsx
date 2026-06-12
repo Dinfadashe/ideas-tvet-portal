@@ -42,14 +42,14 @@ export default function AdminImportStudents() {
       return fields
     }
 
-    const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''))
+    const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/\r/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''))
     const missing = REQUIRED_HEADERS.filter(h => !headers.includes(h))
     if (missing.length) {
       setErrors([`Missing required columns: ${missing.join(', ')}. Found columns: ${headers.join(', ')}`])
       return []
     }
     return lines.slice(1).filter(l => l.trim()).map((line, i) => {
-      const vals = parseLine(line)
+      const vals = parseLine(line).map(v => v.replace(/\r/g, '').trim())
       return headers.reduce((obj, h, j) => { obj[h] = vals[j] || ''; return obj }, { _row: i + 2 })
     })
   }
@@ -92,7 +92,8 @@ export default function AdminImportStudents() {
           throw new Error(err.error || `Import failed (${res.status})`)
         }
 
-        const { ok, fail } = await res.json()
+        const result = await res.json()
+        const { ok, fail } = result
         allOk.push(...ok)
         allFail.push(...fail)
       }

@@ -68,7 +68,13 @@ async function emailExists(email) {
   return Array.isArray(data) && data.length > 0
 }
 
-async function processStudent(row) {
+async function processStudent(rawRow) {
+  // Strip \r from all keys and values (Windows CSV line endings)
+  const row = {}
+  for (const [k, v] of Object.entries(rawRow)) {
+    row[k.replace(/\r/g, '').trim()] = typeof v === 'string' ? v.replace(/\r/g, '').trim() : v
+  }
+
   const email = (row.email || '').toLowerCase().trim()
   const fullName = (row.full_name || '').trim()
 
@@ -133,6 +139,9 @@ export const handler = async (event) => {
     const body = JSON.parse(event.body)
     rows = body.rows
     if (!Array.isArray(rows) || rows.length === 0) throw new Error('No rows provided')
+    // Debug: log first row keys and values to see what's arriving
+    console.log('First row received:', JSON.stringify(rows[0]))
+    console.log('Row keys:', Object.keys(rows[0]))
   } catch (err) {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: err.message }) }
   }
@@ -154,6 +163,14 @@ export const handler = async (event) => {
   return {
     statusCode: 200,
     headers: corsHeaders,
-    body: JSON.stringify({ ok, fail }),
+    body: JSON.stringify({ 
+      ok, 
+      fail,
+      _debug: {
+        first_row_keys: rows[0] ? Object.keys(rows[0]) : [],
+        first_row_values: rows[0] ? Object.values(rows[0]) : [],
+        total_rows: rows.length
+      }
+    }),
   }
 }
