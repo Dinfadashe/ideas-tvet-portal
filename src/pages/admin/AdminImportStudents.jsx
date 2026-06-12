@@ -72,33 +72,44 @@ export default function AdminImportStudents() {
     if (!parsed.length) return
     setImporting(true)
 
-    try {
-      const res = await fetch('/.netlify/functions/import-students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rows: parsed }),
-      })
+    const allOk = []
+    const allFail = []
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || `Import failed (${res.status})`)
+    try {
+      // Split into chunks of 20 to avoid Netlify's 26-second timeout
+      const CHUNK_SIZE = 20
+      for (let i = 0; i < parsed.length; i += CHUNK_SIZE) {
+        const chunk = parsed.slice(i, i + CHUNK_SIZE)
+
+        const res = await fetch('/.netlify/functions/import-students', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rows: chunk }),
+        })
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.error || `Import failed (${res.status})`)
+        }
+
+        const { ok, fail } = await res.json()
+        allOk.push(...ok)
+        allFail.push(...fail)
       }
 
-      const { ok, fail } = await res.json()
+      setResults({ ok: allOk, fail: allFail })
+      if (allOk.length) toast.success(`${allOk.length} student(s) imported successfully!`)
+      if (allFail.length) toast.error(`${allFail.length} student(s) failed.`)
 
-      setResults({ ok, fail })
-      if (ok.length) toast.success(`${ok.length} student(s) imported successfully!`)
-      if (fail.length) toast.error(`${fail.length} student(s) failed to import.`)
-
-      // Send admission emails for all successfully imported students (non-blocking)
-      ok.forEach(s => {
+      // Send admission emails non-blocking
+      allOk.forEach(s => {
         sendAdmissionEmail({
           full_name: s.name,
           email: s.email,
           admission_link: s.admissionLink,
           temp_password: s.password,
           student_id: s.student_id,
-        }).catch(err => console.warn('Email send failed for', s.email, err.message))
+        }).catch(err => console.warn('Email failed for', s.email, err.message))
       })
 
     } catch (err) {
@@ -255,7 +266,7 @@ export default function AdminImportStudents() {
           <div className="card-header">
             <h2>Preview — {parsed.length} rows</h2>
             <button className="btn btn-primary" onClick={handleImport} disabled={importing}>
-              {importing ? <><div className="spinner" />Importing...</> : `Import ${parsed.length} Students`}
+                          {importing ? <><div className="spinner" />Importing {parsed.length} students...</> : `Import ${parsed.length} Students`}
             </button>
           </div>
           <div className="table-wrapper">
