@@ -6,6 +6,7 @@ import LoginPage from './pages/auth/LoginPage.jsx'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage.jsx'
 import AcceptAdmissionPage from './pages/auth/AcceptAdmissionPage.jsx'
 import ChangePasswordPage from './pages/auth/ChangePasswordPage.jsx'
+import LandingPage from './pages/LandingPage.jsx'
 
 // Admin pages
 import AdminLayout from './components/admin/AdminLayout.jsx'
@@ -41,6 +42,7 @@ function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   // Force password change on first login
+  // Only enforce when profile is confirmed loaded (not null)
   if (profile && !profile.password_changed && window.location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />
   }
@@ -94,11 +96,13 @@ function AppRoutes() {
         <Route path="logbooks" element={<AdminLogbooks />} />
       </Route>
 
-      {/* Redirects */}
+      {/* Root — landing page for visitors, redirect for logged in */}
       <Route path="/" element={
-        user
-          ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <Navigate to="/login" replace />
+        !user
+          ? <LandingPage />
+          : !profile
+          ? null
+          : <Navigate to={profile.role === 'admin' ? '/admin' : '/dashboard'} replace />
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

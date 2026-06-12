@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext({})
@@ -7,49 +7,81 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const fetchingRef = useRef(false)
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else setLoading(false)
-    })
-
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) await fetchProfile(session.user.id)
-        else {
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+        if (currentUser) {
+          if (!fetchingRef.current) {
+            fetchingRef.current = true
+            await fetchProfile(currentUser)
+            fetchingRef.current = false
+          }
+        } else {
           setProfile(null)
           setLoading(false)
         }
       }
     )
-
     return () => subscription.unsubscribe()
   }, [])
 
-  async function fetchProfile(userId) {
+  async function fetchProfile(currentUser) {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', currentUser.id)
         .single()
 
-      if (error) throw error
-      setProfile(data)
+      if (error) {
+        // PGRST116 = no row found — auto-create the profile row
+        if (error.code === 'PGRST116') {
+          const newProfile = {
+            id: currentUser.id,
+            email: currentUser.email,
+            full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
+            role: 'student',
+            status: 'pending',
+            profile_updated: false,
+            password_changed: false,
+          }
+          const { data: created, error: createError } = await supabase
+            .from('profiles')
+            .insert(newProfile)
+            .select()
+            .single()
+
+          if (createError) {
+            // Row may already exist due to race — try fetching again
+            const { data: retry } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', currentUser.id)
+              .single()
+            setProfile(retry || null)
+          } else {
+            setProfile(created)
+          }
+        } else {
+          throw error
+        }
+      } else {
+        setProfile(data)
+      }
     } catch (err) {
-      console.error('Error fetching profile:', err)
+      console.error('Profile fetch error:', err)
+      setProfile(null)
     } finally {
       setLoading(false)
     }
   }
 
   async function refreshProfile() {
-    if (user) await fetchProfile(user.id)
+    if (user) await fetchProfile(user)
   }
 
   async function signIn(email, password) {
@@ -77,21 +109,17 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
-  const value = {
-    user,
-    profile,
-    loading,
-    isAdmin: profile?.role === 'admin',
-    isStudent: profile?.role === 'student',
-    signIn,
-    signOut,
-    resetPassword,
-    updatePassword,
-    refreshProfile,
-    fetchProfile,
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{
+      user, profile, loading,
+      isAdmin: profile?.role === 'admin',
+      isStudent: profile?.role === 'student',
+      signIn, signOut, resetPassword, updatePassword,
+      refreshProfile, fetchProfile: (u) => fetchProfile(u || user),
+    }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

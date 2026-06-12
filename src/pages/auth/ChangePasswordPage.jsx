@@ -1,13 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.jsx'
 import { supabase } from '../../lib/supabase.js'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
 
 export default function ChangePasswordPage() {
-  const { profile, updatePassword, refreshProfile } = useAuth()
-  const navigate = useNavigate()
+  const { updatePassword } = useAuth()
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [show1, setShow1] = useState(false)
@@ -26,17 +24,33 @@ export default function ChangePasswordPage() {
     }
     setLoading(true)
     try {
+      // Step 1: update auth password
       await updatePassword(newPassword)
+
+      // Step 2: get current user directly from supabase (never rely on context here)
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+      // Step 3: mark password_changed in DB
       await supabase
         .from('profiles')
         .update({ password_changed: true })
-        .eq('id', profile.id)
-      await refreshProfile()
-      toast.success('Password updated successfully!')
-      navigate(profile.role === 'admin' ? '/admin' : '/dashboard')
+        .eq('id', currentUser.id)
+
+      // Step 4: fetch role to know where to redirect
+      const { data: fresh } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single()
+
+      toast.success('Password updated! Redirecting...')
+
+      // Step 5: hard redirect — bypasses React Router and all context race conditions
+      setTimeout(() => {
+        window.location.replace(fresh?.role === 'admin' ? '/admin' : '/dashboard')
+      }, 800)
     } catch (err) {
       toast.error(err.message || 'Failed to update password.')
-    } finally {
       setLoading(false)
     }
   }
@@ -54,7 +68,7 @@ export default function ChangePasswordPage() {
 
         <div className="alert alert-warning" style={{ marginBottom: 20 }}>
           <span>⚠️</span>
-          <span>You're using a temporary password. Please create a secure personal password to continue.</span>
+          <span>You are using a temporary password. Please create a secure personal password to continue.</span>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -101,7 +115,10 @@ export default function ChangePasswordPage() {
             disabled={loading}
             style={{ width: '100%' }}
           >
-            {loading ? <div className="spinner" /> : 'Set Password & Continue'}
+            {loading
+              ? <><div className="spinner" /> Saving...</>
+              : 'Set Password & Continue'
+            }
           </button>
         </form>
       </div>
