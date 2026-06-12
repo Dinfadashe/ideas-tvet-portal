@@ -1,4 +1,6 @@
-// netlify/functions/import-students.js v5
+// netlify/functions/import-students.js v6
+// Fix: Supabase auto-creates a blank profile on auth.signUp via handle_new_user trigger
+// Solution: Use UPDATE after insert to set full_name, or pass metadata to auth
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -21,7 +23,8 @@ function cleanStr(val) {
   return String(val).replace(/\r/g, '').replace(/\n/g, '').trim()
 }
 
-async function createAuthUser(email, password) {
+async function createAuthUser(email, password, fullName) {
+  // Pass full_name in user_metadata so handle_new_user trigger can use it
   const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
     method: 'POST',
     headers: {
@@ -29,15 +32,38 @@ async function createAuthUser(email, password) {
       apikey: SERVICE_KEY,
       Authorization: `Bearer ${SERVICE_KEY}`,
     },
-    body: JSON.stringify({ email, password, email_confirm: true }),
+    body: JSON.stringify({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.message || data.msg || `Auth failed (${res.status})`)
   return data
 }
 
-async function insertProfile(profile) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+async function upsertProfile(profile) {
+  // Use PATCH (update) first in case trigger already created a blank row
+  const patchRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${profile.id}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(profile),
+    }
+  )
+
+  if (patchRes.ok) return // Update succeeded
+
+  // If no row exists yet, insert
+  const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -47,9 +73,10 @@ async function insertProfile(profile) {
     },
     body: JSON.stringify(profile),
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || err.details || `Profile insert failed (${res.status}): ${JSON.stringify(err)}`)
+
+  if (!insertRes.ok) {
+    const err = await insertRes.json().catch(() => ({}))
+    throw new Error(err.message || err.details || `Profile upsert failed (${insertRes.status})`)
   }
 }
 
@@ -72,7 +99,6 @@ async function emailExists(email) {
 }
 
 async function processStudent(rawRow) {
-  // Clean all keys and values — strip \r, \n, extra spaces
   const row = {}
   for (const [k, v] of Object.entries(rawRow)) {
     const cleanKey = cleanStr(k).toLowerCase().replace(/[^a-z0-9_]/g, '')
@@ -82,14 +108,11 @@ async function processStudent(rawRow) {
   const email = (row.email || '').toLowerCase().trim()
   const fullName = (row.full_name || row.fullname || row.name || '').trim()
 
-  // Log what we received for debugging
-  console.log(`Row: email="${email}" full_name="${fullName}" keys=${Object.keys(row).join(',')}`)
-
   if (!email) return { success: false, email: '(missing)', reason: 'Email is required' }
-  if (!fullName) return { 
-    success: false, 
-    email, 
-    reason: `Full name is empty. Row keys received: ${Object.keys(row).join(', ')}. Values: ${Object.values(row).join(' | ')}` 
+  if (!fullName) return {
+    success: false,
+    email,
+    reason: `Full name missing. Keys: ${Object.keys(row).join(', ')}`
   }
 
   try {
@@ -99,10 +122,17 @@ async function processStudent(rawRow) {
 
     const password = generatePassword()
     const token = crypto.randomUUID()
-    const authUser = await createAuthUser(email, password)
 
-    await insertProfile({
-      id: authUser.id,
+    // Create auth user WITH full_name in metadata
+    const authUser = await createAuthUser(email, password, fullName)
+    const userId = authUser.id
+
+    // Wait briefly for any trigger to fire
+    await new Promise(r => setTimeout(r, 300))
+
+    // Now upsert the full profile (PATCH first, then INSERT)
+    await upsertProfile({
+      id: userId,
       email,
       full_name: fullName,
       phone: row.phone || null,
@@ -116,7 +146,7 @@ async function processStudent(rawRow) {
       password_changed: false,
     })
 
-    const idNumber = await getIdNumber(authUser.id)
+    const idNumber = await getIdNumber(userId)
     const admissionLink = `${APP_URL}/admit/${token}`
 
     return {
@@ -125,7 +155,7 @@ async function processStudent(rawRow) {
       email,
       password,
       admissionLink,
-      student_id: authUser.id,
+      student_id: userId,
       id_number: idNumber,
     }
   } catch (err) {
@@ -141,7 +171,7 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Missing SUPABASE_SERVICE_ROLE_KEY env var on Netlify' }),
+      body: JSON.stringify({ error: 'Missing SUPABASE_SERVICE_ROLE_KEY env var' }),
     }
   }
 
@@ -150,12 +180,11 @@ export const handler = async (event) => {
     const body = JSON.parse(event.body)
     rows = body.rows
     if (!Array.isArray(rows) || rows.length === 0) throw new Error('No rows provided')
-    console.log(`v5: Received ${rows.length} rows. First row raw: ${JSON.stringify(rows[0])}`)
   } catch (err) {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: err.message }) }
   }
 
-  const BATCH_SIZE = 5
+  const BATCH_SIZE = 3
   const ok = []
   const fail = []
 
@@ -171,6 +200,6 @@ export const handler = async (event) => {
   return {
     statusCode: 200,
     headers: corsHeaders,
-    body: JSON.stringify({ ok, fail, version: 'v5', first_fail_reason: fail[0]?.reason }),
+    body: JSON.stringify({ ok, fail, version: 'v6' }),
   }
 }
