@@ -186,6 +186,8 @@ export default function AdminImportStudents() {
       await handleSendLetter(s).catch(() => {})
     }
   }
+
+  function downloadResults() {
     if (!results) return
     const rows = [
       ['Name', 'Email', 'Temporary Password', 'Admission Link', 'Status'],
