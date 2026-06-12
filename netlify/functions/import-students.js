@@ -1,12 +1,8 @@
-// netlify/functions/import-students.js
-// Server-side bulk student import using Supabase Admin API
-// Processes all students in one function call with parallel batching
+// netlify/functions/import-students.js v5
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const APP_URL = process.env.VITE_APP_URL || 'https://ideas.theweb3alliance.org'
-
-const FUNCTION_VERSION = 'v4-crlf-fix'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +14,11 @@ const corsHeaders = {
 function generatePassword() {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
   return 'IDEA$' + Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
+
+function cleanStr(val) {
+  if (!val) return ''
+  return String(val).replace(/\r/g, '').replace(/\n/g, '').trim()
 }
 
 async function createAuthUser(email, password) {
@@ -48,7 +49,7 @@ async function insertProfile(profile) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || err.details || `Profile insert failed (${res.status})`)
+    throw new Error(err.message || err.details || `Profile insert failed (${res.status}): ${JSON.stringify(err)}`)
   }
 }
 
@@ -71,17 +72,25 @@ async function emailExists(email) {
 }
 
 async function processStudent(rawRow) {
-  // Strip \r from all keys and values (Windows CSV line endings)
+  // Clean all keys and values — strip \r, \n, extra spaces
   const row = {}
   for (const [k, v] of Object.entries(rawRow)) {
-    row[k.replace(/\r/g, '').trim()] = typeof v === 'string' ? v.replace(/\r/g, '').trim() : v
+    const cleanKey = cleanStr(k).toLowerCase().replace(/[^a-z0-9_]/g, '')
+    row[cleanKey] = cleanStr(v)
   }
 
   const email = (row.email || '').toLowerCase().trim()
-  const fullName = (row.full_name || '').trim()
+  const fullName = (row.full_name || row.fullname || row.name || '').trim()
+
+  // Log what we received for debugging
+  console.log(`Row: email="${email}" full_name="${fullName}" keys=${Object.keys(row).join(',')}`)
 
   if (!email) return { success: false, email: '(missing)', reason: 'Email is required' }
-  if (!fullName) return { success: false, email, reason: 'Full name is required' }
+  if (!fullName) return { 
+    success: false, 
+    email, 
+    reason: `Full name is empty. Row keys received: ${Object.keys(row).join(', ')}. Values: ${Object.values(row).join(' | ')}` 
+  }
 
   try {
     if (await emailExists(email)) {
@@ -141,14 +150,11 @@ export const handler = async (event) => {
     const body = JSON.parse(event.body)
     rows = body.rows
     if (!Array.isArray(rows) || rows.length === 0) throw new Error('No rows provided')
-    // Debug: log first row keys and values to see what's arriving
-    console.log('First row received:', JSON.stringify(rows[0]))
-    console.log('Row keys:', Object.keys(rows[0]))
+    console.log(`v5: Received ${rows.length} rows. First row raw: ${JSON.stringify(rows[0])}`)
   } catch (err) {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: err.message }) }
   }
 
-  // Process in parallel batches of 5 to stay within timeout
   const BATCH_SIZE = 5
   const ok = []
   const fail = []
@@ -165,6 +171,6 @@ export const handler = async (event) => {
   return {
     statusCode: 200,
     headers: corsHeaders,
-    body: JSON.stringify({ ok, fail, version: FUNCTION_VERSION }),
+    body: JSON.stringify({ ok, fail, version: 'v5', first_fail_reason: fail[0]?.reason }),
   }
 }
