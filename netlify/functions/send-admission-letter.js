@@ -3,7 +3,7 @@
 // The email contains a "Download as PNG" button that renders the letter client-side
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@ideas.theweb3alliance.org'
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@theweb3alliance.org'
 const APP_URL = process.env.VITE_APP_URL || 'https://ideas.theweb3alliance.org'
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
