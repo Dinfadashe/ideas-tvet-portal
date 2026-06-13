@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase.js'
 import toast from 'react-hot-toast'
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react'
 
@@ -16,33 +15,32 @@ export default function AcceptAdmissionPage() {
 
   async function verifyToken() {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('admission_token', token)
-        .single()
-
-      if (error || !data) { setStatus('invalid'); return }
-      if (data.admission_accepted) { setStatus('accepted'); setStudent(data); return }
-      setStudent(data)
+      const res = await fetch('/.netlify/functions/accept-admission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, action: 'verify' }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { setStatus('invalid'); return }
+      if (data.already_accepted) { setStatus('accepted'); setStudent(data.student); return }
+      setStudent(data.student)
       setStatus('valid')
     } catch (err) {
-      setStatus('error')
+      setStatus('invalid')
     }
   }
 
   async function acceptAdmission() {
     setStatus('loading')
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          admission_accepted: true,
-          admission_accepted_at: new Date().toISOString(),
-          status: 'admitted',
-        })
-        .eq('admission_token', token)
-      if (error) throw error
+      const res = await fetch('/.netlify/functions/accept-admission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, action: 'accept' }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed')
+      setStudent(data.student)
       setStatus('accepted')
       toast.success('Admission accepted! You can now log in to your portal.')
     } catch (err) {
