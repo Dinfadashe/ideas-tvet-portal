@@ -99,7 +99,7 @@ export function AuthProvider({ children }) {
 
   async function resetPassword(email) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${import.meta.env.VITE_APP_URL}/auth/reset-password`,
+      redirectTo: `https://ideas.theweb3alliance.org/auth/reset-password`,
     })
     if (error) throw error
   }

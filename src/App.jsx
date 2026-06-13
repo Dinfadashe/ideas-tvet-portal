@@ -101,7 +101,7 @@ function AppRoutes() {
         !user
           ? <LandingPage />
           : !profile
-          ? null
+          ? <LandingPage />
           : <Navigate to={profile.role === 'admin' ? '/admin' : '/dashboard'} replace />
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
