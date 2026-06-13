@@ -85,7 +85,10 @@ export function AuthProvider({ children }) {
   }
 
   async function signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email: email.toLowerCase().trim(), 
+      password 
+    })
     if (error) throw error
     return data
   }
@@ -98,7 +101,7 @@ export function AuthProvider({ children }) {
   }
 
   async function resetPassword(email) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
       redirectTo: `https://ideas.theweb3alliance.org/auth/reset-password`,
     })
     if (error) throw error
