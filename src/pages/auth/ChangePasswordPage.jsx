@@ -24,8 +24,11 @@ export default function ChangePasswordPage() {
     }
     setLoading(true)
     try {
-      // Step 1: update auth password
-      await updatePassword(newPassword)
+      // Step 1: update auth password AND mark in metadata
+      await supabase.auth.updateUser({ 
+        password: newPassword,
+        data: { password_changed: true }
+      })
 
       // Step 2: get current user directly from supabase (never rely on context here)
       const { data: { user: currentUser } } = await supabase.auth.getUser()

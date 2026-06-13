@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
             role: 'student',
             status: 'pending',
             profile_updated: false,
-            password_changed: false,
+            password_changed: currentUser.user_metadata?.password_changed || false,
           }
           const { data: created, error: createError } = await supabase
             .from('profiles')
