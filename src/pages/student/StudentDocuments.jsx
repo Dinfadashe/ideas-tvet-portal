@@ -69,17 +69,11 @@ function StudentIDCard({ profile }) {
           height: 44,
           boxSizing: 'border-box',
         }}>
-          {['FME', 'W3A', 'WORLD\nBANK', 'PLATO\nPOLY'].map((lbl, i) => (
-            <div key={i} style={{
-              width: 24, height: 24,
-              background: 'rgba(255,255,255,0.18)',
-              borderRadius: 4,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <span style={{ color: 'white', fontSize: 5.5, fontWeight: 'bold', textAlign: 'center', whiteSpace: 'pre', lineHeight: 1.2 }}>{lbl}</span>
-            </div>
-          ))}
+          <img
+            src="/logo.png"
+            alt="Partner Logos"
+            style={{ height: 28, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+          />
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ color: '#ffffff', fontSize: 9.5, fontWeight: 'bold', letterSpacing: 0.8, textTransform: 'uppercase' }}>
               IDEAS-TVET Programme
