@@ -543,7 +543,7 @@ export default function StudentDocuments() {
         {/* Acceptance Letter Upload */}
         <div className="card">
           <div className="card-header">
-            <h2>Acceptance Letter</h2>
+            <h2>Internship Acceptance Letter</h2>
             {hasUploadedAcceptance && <span className="badge badge-green">✓ Submitted</span>}
           </div>
           <div className="card-body">
@@ -571,12 +571,12 @@ export default function StudentDocuments() {
             ) : (
               <>
                 <div style={{ marginBottom: 16, fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>
-                  Upload your signed acceptance letter to confirm your participation in the program. Accepted formats: PDF, JPG, PNG (max 5MB).
+                  Upload your signed <strong>internship acceptance letter</strong> from your host organisation to confirm your placement. Accepted formats: PDF, JPG, PNG (max 5MB).
                 </div>
                 <div className="upload-zone" onClick={() => fileRef.current?.click()}>
                   <Upload size={28} color="#94a3b8" style={{ margin: '0 auto 10px', display: 'block' }} />
                   <div style={{ fontWeight: 600, fontSize: 14, color: '#475569', marginBottom: 4 }}>
-                    Click to upload acceptance letter
+                    Click to upload internship acceptance letter
                   </div>
                   <div style={{ fontSize: 12, color: '#94a3b8' }}>PDF, JPG or PNG up to 5MB</div>
                   <input
