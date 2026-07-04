@@ -22,6 +22,7 @@ function resetHTML({ full_name, reset_link }) {
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td>
+              <img src="https://ideas.theweb3alliance.org/logo.png" alt="Web3.0 Alliance Ltd" style="height:48px;width:auto;display:block;margin-bottom:6px;" />
               <div style="color:#ffffff;font-size:20px;font-weight:bold;">WEB3.0 ALLIANCE LIMITED</div>
               <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:2px;">IDEAS-TVET Programme — Plateau State</div>
             </td>
