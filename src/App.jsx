@@ -15,6 +15,7 @@ import AdminStudents from './pages/admin/AdminStudents.jsx'
 import AdminStudentDetail from './pages/admin/AdminStudentDetail.jsx'
 import AdminImportStudents from './pages/admin/AdminImportStudents.jsx'
 import AdminLogbooks from './pages/admin/AdminLogbooks.jsx'
+import AdminTSPs from './pages/admin/AdminTSPs.jsx'
 
 // Student pages
 import StudentLayout from './components/student/StudentLayout.jsx'
@@ -23,7 +24,12 @@ import StudentProfile from './pages/student/StudentProfile.jsx'
 import StudentLogbook from './pages/student/StudentLogbook.jsx'
 import StudentDocuments from './pages/student/StudentDocuments.jsx'
 
-function ProtectedRoute({ children, requireAdmin = false }) {
+// TSP pages
+import RegisterTSP from './pages/tsp/RegisterTSP.jsx'
+import TSPDashboard from './pages/tsp/TSPDashboard.jsx'
+import TSPRenew from './pages/tsp/TSPRenew.jsx'
+
+function ProtectedRoute({ children, requireAdmin = false, requireTSP = false }) {
   const { user, profile, loading } = useAuth()
 
   if (loading) return (
@@ -41,8 +47,11 @@ function ProtectedRoute({ children, requireAdmin = false }) {
     return <Navigate to="/dashboard" replace />
   }
 
+  if (requireTSP && profile?.role !== 'tsp') {
+    return <Navigate to="/dashboard" replace />
+  }
+
   // Force password change on first login
-  // Only enforce when profile is confirmed loaded (not null)
   if (profile && !profile.password_changed && window.location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />
   }
@@ -60,11 +69,16 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/login" element={
         user && profile?.password_changed
-          ? <Navigate to={profile?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+          ? <Navigate to={
+              profile?.role === 'admin' ? '/admin' :
+              profile?.role === 'tsp' ? '/tsp/dashboard' :
+              '/dashboard'
+            } replace />
           : <LoginPage />
       } />
       <Route path="/admit/:token" element={<AcceptAdmissionPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/register-tsp" element={<RegisterTSP />} />
       <Route path="/change-password" element={
         <ProtectedRoute>
           <ChangePasswordPage />
@@ -94,7 +108,20 @@ function AppRoutes() {
         <Route path="students/:id" element={<AdminStudentDetail />} />
         <Route path="import" element={<AdminImportStudents />} />
         <Route path="logbooks" element={<AdminLogbooks />} />
+        <Route path="tsps" element={<AdminTSPs />} />
       </Route>
+
+      {/* TSP routes */}
+      <Route path="/tsp/dashboard" element={
+        <ProtectedRoute requireTSP>
+          <TSPDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/tsp/renew" element={
+        <ProtectedRoute requireTSP>
+          <TSPRenew />
+        </ProtectedRoute>
+      } />
 
       {/* Root — landing page for visitors, redirect for logged in */}
       <Route path="/" element={
@@ -102,7 +129,11 @@ function AppRoutes() {
           ? <LandingPage />
           : !profile
           ? <LandingPage />
-          : <Navigate to={profile.role === 'admin' ? '/admin' : '/dashboard'} replace />
+          : <Navigate to={
+              profile.role === 'admin' ? '/admin' :
+              profile.role === 'tsp' ? '/tsp/dashboard' :
+              '/dashboard'
+            } replace />
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
