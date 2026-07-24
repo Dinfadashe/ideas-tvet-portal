@@ -457,7 +457,7 @@ export default function StudentDocuments() {
     <div>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 800, color: '#0a1628' }}>Documents</h1>
-        <p style={{ color: '#64748b', fontSize: 13 }}>Download your ID card, internship letter and upload your acceptance letter.</p>
+        <p style={{ color: '#64748b', fontSize: 13 }}>This page contains all your official programme documents. Download your Student ID Card, download your Internship Placement Letter (available after placement), and upload your signed Internship Acceptance Letter from your host organisation.</p>
       </div>
 
       {/* ── ID CARD SECTION ── */}
@@ -467,6 +467,9 @@ export default function StudentDocuments() {
           <span className="badge badge-green">Available</span>
         </div>
         <div className="card-body" style={{ display: 'flex', justifyContent: 'center', padding: '24px 20px' }}>
+          <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, color: '#166534', lineHeight: 1.6 }}>
+            📌 <strong>Your Official Student ID Card</strong> — This card contains your full name, trainee ID number, passport photo, programme details, and training venue. Download it as a high-quality PNG image and print it for use as your official identification throughout the programme. <strong>Upload your passport photo first</strong> for the best result.
+          </div>
           <StudentIDCard profile={profile} />
         </div>
       </div>
@@ -490,8 +493,8 @@ export default function StudentDocuments() {
                   <div style={{ fontWeight: 600, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
                     Internship Placement Letter
                   </div>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                    Official letter from Web3.0 Alliance Ltd confirming your internship placement.
+                  <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.6 }}>
+                    This is the official letter issued by <strong>Web3.0 Alliance Ltd</strong> confirming your internship placement. Present this letter to your host organisation when you resume your 3-month practical internship. The letter includes your name, NIN, placement period, and is signed by the programme coordinator.
                   </div>
                 </div>
 
@@ -526,8 +529,8 @@ export default function StudentDocuments() {
               <div style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8' }}>
                 <Lock size={32} style={{ margin: '0 auto 12px', display: 'block' }} />
                 <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 6, color: '#64748b' }}>Not Yet Available</div>
-                <div style={{ fontSize: 13 }}>
-                  Your internship letter will be available once you have been placed on internship by your administrator.
+                <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                  Your <strong>Internship Placement Letter</strong> is not yet available. It will be unlocked once your administrator places you on internship. You will be notified when it is ready to download. Once available, present this letter to your host organisation before resuming your 3-month practical internship.
                 </div>
               </div>
             )}
@@ -548,8 +551,8 @@ export default function StudentDocuments() {
                   <div style={{ fontWeight: 600, fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
                     Acceptance Letter Submitted
                   </div>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                    Your letter has been received and is under review.
+                  <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.6 }}>
+                    Your Internship Acceptance Letter has been received and is under review by your administrator. No further action is required at this time.
                   </div>
                 </div>
                 {documents.filter(d => d.document_type === 'acceptance_letter').map(doc => (
@@ -565,12 +568,12 @@ export default function StudentDocuments() {
             ) : (
               <>
                 <div style={{ marginBottom: 16, fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>
-                  Upload your signed <strong>internship acceptance letter</strong> from your host organisation to confirm your placement. Accepted formats: PDF, JPG, PNG (max 5MB).
+                  📋 <strong>What to upload here:</strong> After your host organisation accepts you for internship, they will issue you a signed <strong>Internship Acceptance Letter</strong> on their letterhead. Scan or photograph that letter clearly and upload it here. This confirms your placement and is required for your programme records and stipend processing. Accepted formats: PDF, JPG, PNG (max 5MB).
                 </div>
                 <div className="upload-zone" onClick={() => fileRef.current?.click()}>
                   <Upload size={28} color="#94a3b8" style={{ margin: '0 auto 10px', display: 'block' }} />
                   <div style={{ fontWeight: 600, fontSize: 14, color: '#475569', marginBottom: 4 }}>
-                    Click to upload internship acceptance letter
+                    Click to upload your Internship Acceptance Letter (from host organisation)
                   </div>
                   <div style={{ fontSize: 12, color: '#94a3b8' }}>PDF, JPG or PNG up to 5MB</div>
                   <input
