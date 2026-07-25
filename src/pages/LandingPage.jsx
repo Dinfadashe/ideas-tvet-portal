@@ -44,6 +44,17 @@ export default function LandingPage() {
     { n: '06', title: 'Graduate & Thrive', desc: 'Receive your certificate and launch your ICT repair business or career.' },
   ]
 
+  const tspFeatures = [
+    { icon: '👥', title: 'Trainee Onboarding', desc: 'Digitally onboard trainees, assign ID numbers, and manage admission acceptance — all in one place.' },
+    { icon: '📊', title: 'Live Dashboard', desc: 'Real-time stats on enrolment, attendance, profiles, and photo uploads with instant visibility.' },
+    { icon: '🪪', title: 'Branded ID Cards', desc: 'Auto-generate print-ready student ID cards with your organisation\'s logo and colour scheme.' },
+    { icon: '📄', title: 'Document Management', desc: 'Issue branded internship letters, track acceptance letter uploads, and manage all trainee documents.' },
+    { icon: '📸', title: 'Photo Album', desc: 'Download a professional photo album of all trainees — ready for submission to funders and regulators.' },
+    { icon: '📧', title: 'Automated Emails', desc: 'Send branded admission offers, profile reminders, and final warnings with one click.' },
+    { icon: '📋', title: 'Logbook Tracking', desc: 'Monitor trainee internship logbooks and track progress through each phase of the programme.' },
+    { icon: '🔒', title: 'Secure & Compliant', desc: 'Role-based access, RLS-protected data, and GRM/GBV compliance tools built in.' },
+  ]
+
   const btnPrimary = {
     background: '#2db84b', color: '#fff', border: 'none',
     borderRadius: 10, padding: '13px 32px', fontSize: 15,
@@ -51,359 +62,271 @@ export default function LandingPage() {
     transition: 'all 0.2s',
   }
 
-  const btnGhost = {
-    background: 'rgba(255,255,255,0.07)', color: '#fff',
-    border: '1.5px solid rgba(255,255,255,0.15)',
-    borderRadius: 10, padding: '13px 28px', fontSize: 15,
-    fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
-    textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8,
-    transition: 'all 0.2s',
+  const btnOutline = {
+    background: 'transparent', color: '#fff',
+    border: '2px solid rgba(255,255,255,0.4)',
+    borderRadius: 10, padding: '13px 32px', fontSize: 15,
+    fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif',
   }
 
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif', background: '#fff', overflowX: 'hidden' }}>
+    <div style={{ fontFamily: 'DM Sans, sans-serif', background: '#0a1628', minHeight: '100vh', color: '#fff' }}>
 
-      {/* ── NAV ── */}
+      {/* ── NAVBAR ── */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         background: scrolled ? 'rgba(10,22,40,0.97)' : 'transparent',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         borderBottom: scrolled ? '1px solid rgba(255,255,255,0.08)' : 'none',
-        transition: 'all 0.3s ease', padding: '0 5%',
+        transition: 'all 0.3s',
+        padding: '16px 48px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/logo.png" alt="Web3.0 Alliance" style={{ height: 36, width: 'auto', objectFit: 'contain', background: 'white', borderRadius: 6, padding: '2px 5px' }} />
-            <div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#fff', lineHeight: 1.2 }}>IDEAS-TVET</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.5px' }}>PORTAL</div>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/login')}
-            style={btnPrimary}
-            onMouseEnter={e => { e.currentTarget.style.background = '#1f9c3a'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#2db84b'; e.currentTarget.style.transform = '' }}
-          >
-            Trainee Login →
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="/logo.png" alt="Web3.0 Alliance" style={{ height: 36, width: 'auto' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={() => navigate('/register-tsp')} style={{
+            background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 8, padding: '8px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}>
+            TSP Registration
+          </button>
+          <button onClick={() => navigate('/login')} style={btnPrimary}>
+            Trainee Login
           </button>
         </div>
       </nav>
 
       {/* ── HERO ── */}
       <section style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(160deg, #040d1a 0%, #0a1628 45%, #0d2044 70%, #0f2a55 100%)',
-        position: 'relative', display: 'flex', alignItems: 'center',
-        overflow: 'hidden', padding: '100px 5% 60px',
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '120px 48px 80px',
+        background: 'linear-gradient(135deg, #0a1628 0%, #0d3d1e 50%, #0a1628 100%)',
+        textAlign: 'center', position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: '8%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(45,184,75,0.12) 0%, transparent 70%)', borderRadius: '50%' }} />
-          <div style={{ position: 'absolute', bottom: '10%', left: '0%', width: 400, height: 400, background: 'radial-gradient(circle, rgba(45,184,75,0.07) 0%, transparent 70%)', borderRadius: '50%' }} />
-          <div style={{ position: 'absolute', inset: 0, opacity: 0.03, backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-        </div>
+        {/* BG circles */}
+        <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(45,184,75,0.12) 0%, transparent 70%)', top: '10%', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
-          {/* Partner badges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', marginRight: 4 }}>In Partnership With</span>
-            {partners.map(p => (
-              <div key={p.name} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
-                {p.short}
-              </div>
-            ))}
+        <div style={{ maxWidth: 760, position: 'relative' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(45,184,75,0.15)', border: '1px solid rgba(45,184,75,0.3)', borderRadius: 100, padding: '6px 18px', marginBottom: 24 }}>
+            <div style={{ width: 7, height: 7, background: '#2db84b', borderRadius: '50%', boxShadow: '0 0 8px #2db84b' }} />
+            <span style={{ fontSize: 12, color: '#2db84b', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' }}>Now Accepting Trainees</span>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
-            {/* Left */}
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(45,184,75,0.15)', border: '1px solid rgba(45,184,75,0.3)', borderRadius: 20, padding: '6px 16px', marginBottom: 24 }}>
-                <div style={{ width: 7, height: 7, background: '#2db84b', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
-                <span style={{ fontSize: 12, color: '#3dd860', fontWeight: 600, letterSpacing: '0.5px' }}>WORLD BANK FUNDED · NOW ENROLLING</span>
-              </div>
-
-              <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 'clamp(36px, 5vw, 58px)', color: '#ffffff', lineHeight: 1.1, marginBottom: 8 }}>
-                IDEAS-TVET
-              </h1>
-              <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 'clamp(18px, 2.5vw, 26px)', color: '#2db84b', marginBottom: 20, lineHeight: 1.3 }}>
-                Computer Hardware &<br />Cellphone Repairs Training
-              </h2>
-              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, marginBottom: 32, maxWidth: 460 }}>
-                A fully funded skills training program empowering Nigerian youth with practical digital repair skills — implemented by <strong style={{ color: 'rgba(255,255,255,0.85)' }}>Web3.0 Alliance Ltd</strong> in partnership with the Federal Ministry of Education and the World Bank.
-              </p>
-
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 48 }}>
-                <button
-                  onClick={() => navigate('/login')}
-                  style={{ ...btnPrimary, padding: '14px 32px', fontSize: 15 }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#1f9c3a'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(45,184,75,0.35)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#2db84b'; e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
-                >
-                  Access Trainee Portal →
-                </button>
-                <a href="mailto:ideas@theweb3alliance.org" style={btnGhost}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
-                >
-                  Contact Us
-                </a>
-              </div>
-
-              <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-                {stats.map(s => (
-                  <div key={s.label}>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 26, color: '#2db84b', lineHeight: 1 }}>{s.value}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right card */}
-            <div style={{ position: 'relative' }}>
-              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 28, backdropFilter: 'blur(10px)' }}>
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#2db84b', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 12 }}>Training Venue</div>
-                  <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: 'rgba(45,184,75,0.08)', border: '1px solid rgba(45,184,75,0.2)', borderRadius: 12, padding: '16px' }}>
-                    <div style={{ fontSize: 28 }}>📍</div>
-                    <div>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: 4 }}>IDEAS-TVET Training Centre</div>
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>Plateau State Polytechnic, Jos<br />Plateau State, Nigeria</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#2db84b', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 12 }}>Training Includes</div>
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {['Computer Hardware Diagnostics', 'Laptop & Desktop Repairs', 'Smartphone Repairs', 'Software Installation', 'Device Maintenance & Servicing', 'Entrepreneurship Skills'].map(item => (
-                      <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>
-                        <div style={{ width: 18, height: 18, background: 'rgba(45,184,75,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: 10, color: '#2db84b' }}>✓</span>
-                        </div>
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ background: 'linear-gradient(135deg, rgba(45,184,75,0.2), rgba(45,184,75,0.08))', border: '1px solid rgba(45,184,75,0.25)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 20 }}>🌍</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#3dd860' }}>Fully Funded by the World Bank</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>through the Federal Ministry of Education</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ position: 'absolute', top: -16, right: -16, background: '#2db84b', borderRadius: 12, padding: '10px 16px', boxShadow: '0 8px 24px rgba(45,184,75,0.4)' }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#fff', lineHeight: 1 }}>FREE</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>PROGRAM</div>
-              </div>
-            </div>
+          <h1 style={{ fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 900, fontFamily: 'Syne, sans-serif', lineHeight: 1.1, marginBottom: 20 }}>
+            IDEAS-TVET<br />
+            <span style={{ color: '#2db84b' }}>Training Portal</span>
+          </h1>
+          <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, marginBottom: 36, maxWidth: 600, margin: '0 auto 36px' }}>
+            A World Bank–funded skills programme delivering free, industry-certified training in Computer Hardware & Cellphone Repairs across Plateau State, Nigeria.
+          </p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => navigate('/login')} style={btnPrimary}>Access Trainee Portal →</button>
+            <button onClick={() => {
+              document.getElementById('tsp-section')?.scrollIntoView({ behavior: 'smooth' })
+            }} style={btnOutline}>Are You a TSP? ↓</button>
           </div>
-        </div>
-
-        <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>SCROLL</span>
-          <div style={{ width: 1, height: 32, background: 'linear-gradient(to bottom, rgba(45,184,75,0.6), transparent)' }} />
         </div>
       </section>
 
-      {/* ── PARTNERS STRIP ── */}
-      <section style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '20px 5%' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4%', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase' }}>Training Partners</span>
-          {partners.map(p => (
-            <div key={p.name} style={{ fontSize: 13, fontWeight: 600, color: '#475569', padding: '4px 0' }}>{p.name}</div>
+      {/* ── STATS ── */}
+      <section style={{ background: '#0d1f35', padding: '48px', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 32, textAlign: 'center' }}>
+          {stats.map(s => (
+            <div key={s.label}>
+              <div style={{ fontSize: 40, fontWeight: 900, fontFamily: 'Syne, sans-serif', color: '#2db84b' }}>{s.value}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4, letterSpacing: 0.5 }}>{s.label}</div>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* ── ABOUT ── */}
-      <section style={{ padding: '88px 5%', background: '#fff' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#2db84b', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 14 }}>About the Program</div>
-              <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(28px, 3.5vw, 40px)', color: '#0a1628', lineHeight: 1.2, marginBottom: 20 }}>
-                Empowering Nigerian Youth with Practical Digital Skills
-              </h2>
-              <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.8, marginBottom: 16 }}>
-                The IDEAS-TVET Initiative is a Federal Government program supported by the World Bank under the Investing in Digital and Education Access for Skills project. The Computer Hardware & Cellphone Repairs Training provides unemployed Nigerian youth with market-relevant technical skills to start businesses or gain employment in the rapidly growing ICT repair sector.
-              </p>
-              <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.8, marginBottom: 28 }}>
-                <strong style={{ color: '#0a1628' }}>Web3.0 Alliance Ltd</strong> is the implementing partner responsible for delivering the program at the IDEAS-TVET Training Centre at Plateau State Polytechnic, Jos, under Contract No. IDEAS-TVET2/NPCU/PLATEAU/05.26/304.
-              </p>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {['Hands-on Workshops', 'Industry Trainers', 'Certified Program', 'Internship Placement'].map(tag => (
-                  <div key={tag} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', borderRadius: 6, padding: '5px 14px', fontSize: 12, fontWeight: 600 }}>{tag}</div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              {[
-                { icon: '🎯', title: 'Mission', body: 'Equip 300+ Nigerian youth with ICT repair skills to reduce unemployment in Plateau State.' },
-                { icon: '🏆', title: 'Certification', body: 'Trainees receive government-recognised certificates upon successful program completion.' },
-                { icon: '💼', title: 'Job Readiness', body: 'Entrepreneurship and employability modules prepare trainees to launch or join businesses.' },
-                { icon: '🔬', title: 'Practical Focus', body: 'Over 70% of the curriculum is hands-on bench work on real devices.' },
-              ].map(card => (
-                <div key={card.title}
-                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '20px', transition: 'transform 0.2s, box-shadow 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)' }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
-                >
-                  <div style={{ fontSize: 28, marginBottom: 10 }}>{card.icon}</div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#0a1628', marginBottom: 6 }}>{card.title}</div>
-                  <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>{card.body}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── CURRICULUM ── */}
-      <section style={{ padding: '88px 5%', background: '#f8fafc' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#2db84b', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 14 }}>Curriculum</div>
-            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(26px, 3vw, 38px)', color: '#0a1628', marginBottom: 14 }}>What You Will Learn</h2>
-            <p style={{ fontSize: 15, color: '#64748b', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
-              A comprehensive, hands-on curriculum designed with industry input and aligned with national TVET standards.
-            </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
-            {modules.map((mod, i) => (
-              <div key={mod.title}
-                style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16, padding: '24px', transition: 'all 0.2s', position: 'relative', overflow: 'hidden' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#2db84b'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(45,184,75,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = '' }}
-              >
-                <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: '#2db84b', borderRadius: '3px 0 0 3px', opacity: 0.7 }} />
-                <div style={{ fontSize: 32, marginBottom: 14 }}>{mod.icon}</div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#0a1628', marginBottom: 8 }}>{mod.title}</div>
-                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.65 }}>{mod.desc}</div>
-                <div style={{ marginTop: 14, fontSize: 11, color: '#2db84b', fontWeight: 700, letterSpacing: '0.5px' }}>MODULE {String(i + 1).padStart(2, '0')}</div>
-              </div>
-            ))}
-          </div>
+      <section style={{ padding: '80px 48px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ fontSize: 12, color: '#2db84b', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>What You Will Learn</div>
+          <h2 style={{ fontSize: 36, fontWeight: 900, fontFamily: 'Syne, sans-serif' }}>Programme Curriculum</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+          {modules.map(m => (
+            <div key={m.title} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 24 }}>
+              <div style={{ fontSize: 28, marginBottom: 12 }}>{m.icon}</div>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, fontFamily: 'Syne, sans-serif' }}>{m.title}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>{m.desc}</div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section style={{ padding: '88px 5%', background: '#0a1628' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#2db84b', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 14 }}>Your Journey</div>
-            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(26px, 3vw, 38px)', color: '#fff', marginBottom: 14 }}>How the Program Works</h2>
-            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>
-              From invitation to graduation — here's exactly what to expect as a selected trainee.
-            </p>
+      <section style={{ background: '#0d1f35', padding: '80px 48px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ fontSize: 12, color: '#2db84b', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Your Journey</div>
+            <h2 style={{ fontSize: 36, fontWeight: 900, fontFamily: 'Syne, sans-serif' }}>How It Works</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-            {steps.map(step => (
-              <div key={step.n}
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '24px', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,184,75,0.08)'; e.currentTarget.style.borderColor = 'rgba(45,184,75,0.3)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
-              >
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 36, color: 'rgba(45,184,75,0.25)', lineHeight: 1, marginBottom: 14 }}>{step.n}</div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: 8 }}>{step.title}</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>{step.desc}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+            {steps.map(s => (
+              <div key={s.n} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                <div style={{ width: 40, height: 40, background: 'rgba(45,184,75,0.15)', border: '1px solid rgba(45,184,75,0.3)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#2db84b' }}>{s.n}</span>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, fontFamily: 'Syne, sans-serif' }}>{s.title}</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>{s.desc}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section style={{ padding: '88px 5%', background: '#fff' }}>
+      {/* ── TSP SECTION ── */}
+      <section id="tsp-section" style={{
+        padding: '100px 48px',
+        background: 'linear-gradient(135deg, #071a0c 0%, #0a2e14 50%, #071a0c 100%)',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* BG decoration */}
+        <div style={{ position: 'absolute', top: -100, right: -100, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(200,168,42,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -80, left: -80, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(45,184,75,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative' }}>
+
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(200,168,42,0.15)', border: '1px solid rgba(200,168,42,0.3)', borderRadius: 100, padding: '6px 18px', marginBottom: 20 }}>
+              <span style={{ fontSize: 12, color: '#c8a82a', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' }}>For Training Service Providers</span>
+            </div>
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900, fontFamily: 'Syne, sans-serif', marginBottom: 16, lineHeight: 1.2 }}>
+              Manage Your IDEAS-TVET<br />
+              <span style={{ color: '#c8a82a' }}>Programme With Our Tool</span>
+            </h2>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, maxWidth: 620, margin: '0 auto 12px' }}>
+              Are you a Training Service Provider (TSP) implementing the IDEAS-TVET initiative? Use our platform to digitally manage trainee onboarding, documents, attendance, and reporting — fully branded with your organisation's identity.
+            </p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, maxWidth: 540, margin: '0 auto' }}>
+              Annual subscription: <strong style={{ color: '#c8a82a' }}>₦50,000</strong> · Approved by Web3.0 Alliance Ltd · Activate in 24–48 hours
+            </p>
+          </div>
+
+          {/* Features grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18, marginBottom: 64 }}>
+            {tspFeatures.map(f => (
+              <div key={f.title} style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(200,168,42,0.2)',
+                borderRadius: 14, padding: '22px 24px',
+                transition: 'border-color 0.2s',
+              }}>
+                <div style={{ fontSize: 26, marginBottom: 10 }}>{f.icon}</div>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, fontFamily: 'Syne, sans-serif', color: '#fff' }}>{f.title}</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pricing + CTA card */}
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(200,168,42,0.35)',
+            borderRadius: 20, padding: '48px',
+            display: 'grid', gridTemplateColumns: '1fr auto', gap: 48, alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontSize: 12, color: '#c8a82a', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Simple, Transparent Pricing</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 48, fontWeight: 900, fontFamily: 'Syne, sans-serif', color: '#c8a82a' }}>₦50,000</span>
+                <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>/ year</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', marginBottom: 24 }}>
+                {[
+                  'Unlimited trainees',
+                  'Your logo on all documents',
+                  'Branded ID cards',
+                  'Branded admission emails',
+                  'Branded internship letters',
+                  'Admin dashboard',
+                  'Photo album downloads',
+                  '365-day subscription',
+                ].map(f => (
+                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+                    <span style={{ color: '#2db84b', fontWeight: 700 }}>✓</span> {f}
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: 'rgba(200,168,42,0.1)', border: '1px solid rgba(200,168,42,0.25)', borderRadius: 10, padding: '12px 16px', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                💳 Pay <strong style={{ color: '#c8a82a' }}>₦50,000</strong> to <strong style={{ color: '#fff' }}>Web3.0 Alliance Ltd · UBA · 1027821555</strong>, upload receipt and get approved within 24–48 hours.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center', minWidth: 220 }}>
+              <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Ready to get started?</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Takes less than 10 minutes</div>
+              </div>
+              <button
+                onClick={() => navigate('/register-tsp')}
+                style={{
+                  background: 'linear-gradient(135deg, #c8a82a, #e8c84a)',
+                  color: '#0a2e14', border: 'none',
+                  borderRadius: 12, padding: '16px 36px',
+                  fontSize: 16, fontWeight: 900,
+                  cursor: 'pointer', fontFamily: 'Syne, sans-serif',
+                  width: '100%', letterSpacing: 0.3,
+                }}
+              >
+                Register as TSP →
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  background: 'transparent', color: 'rgba(255,255,255,0.5)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 12, padding: '12px 36px',
+                  fontSize: 14, fontWeight: 600,
+                  cursor: 'pointer', width: '100%',
+                }}
+              >
+                Already registered? Log in
+              </button>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: 1.6 }}>
+                Need help? Email<br />
+                <a href="mailto:official@theweb3alliance.org" style={{ color: '#c8a82a' }}>official@theweb3alliance.org</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PARTNERS ── */}
+      <section style={{ padding: '60px 48px', background: '#0a1628', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#2db84b', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 14 }}>Trainee Portal</div>
-          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(26px, 3.5vw, 42px)', color: '#0a1628', marginBottom: 18, lineHeight: 1.2 }}>
-            Already Admitted? Access Your Portal
-          </h2>
-          <p style={{ fontSize: 16, color: '#64748b', maxWidth: 560, margin: '0 auto 36px', lineHeight: 1.75 }}>
-            If you received an admission email from Web3.0 Alliance Ltd, your trainee portal is ready. Log in to complete your profile, access your logbook, and download your internship letter.
-          </p>
-          <button
-            onClick={() => navigate('/login')}
-            style={{ background: '#0a1628', color: '#fff', border: 'none', borderRadius: 12, padding: '15px 44px', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s', marginBottom: 40 }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#2db84b'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(45,184,75,0.3)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#0a1628'; e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
-          >
-            Login to Portal →
-          </button>
-          <br />
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {['✓ Accept Admission', '✓ Complete Profile', '✓ 3-Month Logbook', '✓ Download Internship Letter', '✓ Upload Documents'].map(f => (
-              <div key={f} style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 500 }}>{f}</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 28 }}>Programme Partners</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' }}>
+            {partners.map(p => (
+              <div key={p.name} style={{ textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.5)' }}>{p.short}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', maxWidth: 100 }}>{p.name}</div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ background: '#040d1a', padding: '48px 5% 24px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 48, marginBottom: 40 }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <img src="/logo.png" alt="Web3.0 Alliance" style={{ height: 36, objectFit: 'contain', background: 'white', borderRadius: 6, padding: '2px 5px' }} />
-                <div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#fff' }}>WEB3.0 ALLIANCE LTD</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>IDEAS-TVET INITIATIVE</div>
-                </div>
-              </div>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 320 }}>
-                Implementing partner for the IDEAS-TVET Computer Hardware & Cellphone Repairs Training Program under the Federal Ministry of Education / World Bank NYESAF project.
-              </p>
-              <div style={{ marginTop: 14, fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Contract: IDEAS-TVET2/NPCU/PLATEAU/05.26/304</div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#2db84b', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 16 }}>Portal</div>
-              {[['Login', '/login'], ['Student Dashboard', '/dashboard'], ['Admin Portal', '/admin']].map(([label, path]) => (
-                <div key={label} style={{ marginBottom: 10 }}>
-                  <button onClick={() => navigate(path)}
-                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', fontSize: 13, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', padding: 0, transition: 'color 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
-                  >{label}</button>
-                </div>
-              ))}
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#2db84b', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 16 }}>Contact</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 2 }}>
-                <div>📧 <a href="mailto:ideas@theweb3alliance.org" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>ideas@theweb3alliance.org</a></div>
-                <div>📍 131 Angwan Dabba Bukuru, Jos</div>
-                <div>🌐 <a href="https://www.theweb3alliance.org" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>theweb3alliance.org</a></div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>© {new Date().getFullYear()} Web3.0 Alliance Ltd. All rights reserved.</div>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {['Federal Ministry of Education', 'World Bank', 'Plateau State Polytechnic'].map(p => (
-                <span key={p} style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>{p}</span>
-              ))}
-            </div>
-          </div>
+      <footer style={{ background: '#060f1a', padding: '32px 48px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <img src="/logo.png" alt="Web3.0 Alliance" style={{ height: 28, width: 'auto', marginBottom: 6, display: 'block' }} />
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>© 2026 Web3.0 Alliance Limited · All rights reserved</div>
+        </div>
+        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+          <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 13 }}>Trainee Login</button>
+          <button onClick={() => navigate('/register-tsp')} style={{ background: 'none', border: 'none', color: '#c8a82a', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>TSP Registration</button>
+          <a href="mailto:official@theweb3alliance.org" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none' }}>Contact Us</a>
         </div>
       </footer>
 
-      <style>{`
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        @media (max-width: 768px) {
-          section > div > div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; gap: 40px !important; }
-          footer > div > div[style*="grid-template-columns: 2fr"] { grid-template-columns: 1fr !important; gap: 32px !important; }
-        }
-      `}</style>
     </div>
   )
 }
