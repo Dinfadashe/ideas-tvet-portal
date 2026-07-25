@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { Download, Upload, FileText, CheckCircle, Lock, CreditCard } from 'lucide-react'
 
 // ─── ID CARD COMPONENT (inline, no extra file needed) ────────────────────────
-function StudentIDCard({ profile }) {
+function StudentIDCard({ profile, brand }) {
   const cardRef = useRef(null)
   const [generating, setGenerating] = useState(false)
 
@@ -37,7 +37,11 @@ function StudentIDCard({ profile }) {
   const name   = profile?.full_name  || 'Student Name'
   const idNum  = profile?.id_number  || 'W3A/IDEAS/----'
   const photo  = profile?.photo_url  || null
-  const prog   = 'Computer Hardware & Cellphone Repairs'
+  const prog   = brand?.trade || 'Computer Hardware & Cellphone Repairs'
+  const primaryColor = brand?.primaryColor || '#0a2e14'
+  const secondaryColor = brand?.secondaryColor || '#c8a82a'
+  const orgName = brand?.orgName || 'Web3.0 Alliance Limited'
+  const logoUrl = brand?.logoUrl || null
 
   // CR80 = 85.6mm × 54mm rendered at 342×216px (4px/mm)
   return (
@@ -53,7 +57,7 @@ function StudentIDCard({ profile }) {
           position: 'relative',
           fontFamily: '"Arial", sans-serif',
           background: '#ffffff',
-          border: '2px solid #1a7a3c',
+          border: `2px solid ${primaryColor}`,
           boxShadow: '0 6px 28px rgba(0,0,0,0.22)',
           flexShrink: 0,
           userSelect: 'none',
@@ -61,7 +65,7 @@ function StudentIDCard({ profile }) {
       >
         {/* TOP HEADER */}
         <div style={{
-          background: 'linear-gradient(135deg, #0a2e14 0%, #1a7a3c 100%)',
+          background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}cc 100%)`,
           padding: '7px 10px 5px',
           display: 'flex',
           alignItems: 'center',
@@ -69,11 +73,27 @@ function StudentIDCard({ profile }) {
           height: 44,
           boxSizing: 'border-box',
         }}>
-          <img
-            src="/logo.png"
-            alt="Partner Logos"
-            style={{ height: 28, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
-          />
+          {/* Logos row - TSP logo if available, else partner acronym boxes */}
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={orgName}
+              crossOrigin="anonymous"
+              style={{ height: 28, width: 'auto', objectFit: 'contain', flexShrink: 0, maxWidth: 100 }}
+            />
+          ) : (
+            ['FME', 'W3A', 'WORLD\nBANK', 'PLATO\nPOLY'].map((lbl, i) => (
+              <div key={i} style={{
+                width: 24, height: 24,
+                background: 'rgba(255,255,255,0.18)',
+                borderRadius: 4,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <span style={{ color: 'white', fontSize: 5.5, fontWeight: 'bold', textAlign: 'center', whiteSpace: 'pre', lineHeight: 1.2 }}>{lbl}</span>
+              </div>
+            ))
+          )}
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ color: '#ffffff', fontSize: 9.5, fontWeight: 'bold', letterSpacing: 0.8, textTransform: 'uppercase' }}>
               IDEAS-TVET Programme
@@ -96,7 +116,7 @@ function StudentIDCard({ profile }) {
           {/* Photo */}
           <div style={{
             width: 74, height: 92,
-            border: '2.5px solid #1a7a3c',
+            border: `2.5px solid ${primaryColor}`,
             borderRadius: 6,
             overflow: 'hidden',
             flexShrink: 0,
@@ -126,7 +146,7 @@ function StudentIDCard({ profile }) {
             <div style={{
               display: 'inline-block',
               alignSelf: 'flex-start',
-              background: '#1a7a3c',
+              background: primaryColor,
               color: '#ffffff',
               fontSize: 9.5, fontWeight: 'bold',
               padding: '2px 10px',
@@ -161,7 +181,7 @@ function StudentIDCard({ profile }) {
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           height: 26,
-          background: 'linear-gradient(135deg, #0a2e14 0%, #1a7a3c 100%)',
+          background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}cc 100%)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -228,14 +248,42 @@ export default function StudentDocuments() {
   const [documents, setDocuments] = useState([])
   const [uploading, setUploading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [tsp, setTsp] = useState(null)
   const fileRef = useRef()
 
   const isIntern = profile?.status === 'intern' || profile?.status === 'graduated'
   const hasUploadedAcceptance = documents.some(d => d.document_type === 'acceptance_letter')
 
+  // Branding — use TSP details if student belongs to a TSP, else W3A defaults
+  const brand = {
+    orgName: tsp?.org_name || 'Web3.0 Alliance Limited',
+    logoUrl: tsp?.logo_url || null,
+    address: tsp?.head_office_address || 'Jos, Plateau State, Nigeria',
+    email: tsp?.org_email || 'official@theweb3alliance.org',
+    website: tsp?.website || 'www.theweb3alliance.org',
+    primaryColor: tsp?.primary_color || '#0a2e14',
+    secondaryColor: tsp?.secondary_color || '#c8a82a',
+    pmName: tsp?.pm_name || 'Jeh Yusuph Dilas',
+    projectName: tsp?.project_name || 'IDEAS-TVET Initiative',
+    trade: tsp?.trade || 'Computer Hardware & Cellphone Repairs',
+  }
+
   useEffect(() => {
-    if (profile?.id) fetchDocuments()
+    if (profile?.id) {
+      fetchDocuments()
+      fetchTSP()
+    }
   }, [profile?.id])
+
+  async function fetchTSP() {
+    if (!profile?.tsp_id) return // master TSP student — use W3A defaults
+    const { data } = await supabase
+      .from('tsp_accounts')
+      .select('*')
+      .eq('id', profile.tsp_id)
+      .single()
+    if (data) setTsp(data)
+  }
 
   async function fetchDocuments() {
     const { data } = await supabase
@@ -256,33 +304,62 @@ export default function StudentDocuments() {
       const margin = 25
       const contentW = pageW - margin * 2
 
+      // Load logo — TSP logo if available, else W3A logo
+      let logoBase64 = null
+      const logoSrc = brand.logoUrl || '/logo.png'
+      try {
+        const logoResp = await fetch(logoSrc)
+        const logoBlob = await logoResp.blob()
+        logoBase64 = await new Promise((res) => {
+          const reader = new FileReader()
+          reader.onloadend = () => res(reader.result)
+          reader.readAsDataURL(logoBlob)
+        })
+      } catch (_) { logoBase64 = null }
+
+      // Parse brand primary color for jsPDF (hex to rgb)
+      const hexToRgb = (hex) => {
+        const h = hex.replace('#', '')
+        return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)]
+      }
+      const [pr, pg, pb] = hexToRgb(brand.primaryColor || '#0a2e14')
+      const [sr, sg, sb] = hexToRgb(brand.secondaryColor || '#1a7a3c')
+
       // Header background
-      doc.setFillColor(10, 22, 40)
-      doc.rect(0, 0, pageW, 42, 'F')
+      doc.setFillColor(pr, pg, pb)
+      doc.rect(0, 0, pageW, 46, 'F')
+
+      // Logo
+      if (logoBase64) {
+        doc.addImage(logoBase64, 'PNG', margin, 6, 50, 16)
+      } else {
+        doc.setTextColor(255, 255, 255)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(14)
+        doc.text(brand.orgName.toUpperCase(), margin, 16)
+      }
 
       doc.setTextColor(255, 255, 255)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(14)
-      doc.text('WEB3.0 ALLIANCE LIMITED', margin, 16)
       doc.setFont('helvetica', 'normal')
-      doc.setFontSize(9)
-      doc.text('Jos, Plateau State, Nigeria', margin, 23)
-      doc.text('Email: official@theweb3alliance.org | Website: www.theweb3alliance.org', margin, 29)
+      doc.setFontSize(8)
+      doc.text(brand.address, margin, 26)
+      doc.text(`${brand.email} | ${brand.website}`, margin, 31)
 
-      doc.setFillColor(45, 184, 75)
-      doc.rect(0, 42, pageW, 4, 'F')
+      doc.setFillColor(sr, sg, sb)
+      doc.rect(0, 46, pageW, 4, 'F')
 
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(7)
       doc.setTextColor(255, 255, 255)
-      doc.text('IDEAS-TVET INITIATIVE', pageW - margin, 16, { align: 'right' })
+      doc.text('IDEAS-TVET INITIATIVE', pageW - margin, 14, { align: 'right' })
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(7)
-      doc.text('Federal Ministry of Education', pageW - margin, 22, { align: 'right' })
-      doc.text('World Bank Funded', pageW - margin, 27, { align: 'right' })
+      doc.text('Federal Ministry of Education', pageW - margin, 20, { align: 'right' })
+      doc.text('World Bank Funded (IDA Credit P166239)', pageW - margin, 26, { align: 'right' })
+      doc.text('Contract: IDEAS-TVET2/NPCU/PLATEAU/05.26/304', pageW - margin, 32, { align: 'right' })
 
       doc.setTextColor(30, 41, 59)
-      let y = 58
+      let y = 62
 
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
@@ -317,8 +394,8 @@ export default function StudentDocuments() {
 
       const lines = [
         `This is to certify that ${profile?.full_name?.toUpperCase()}, with NIN: ${profile?.nin || 'N/A'},`,
-        `is a registered trainee of the IDEAS-TVET Computer Hardware & Cellphone Repairs Training`,
-        `Program being implemented by Web3.0 Alliance Limited in partnership with the Federal`,
+        `is a registered trainee of the IDEAS-TVET ${brand.trade} Training`,
+        `Program being implemented by ${brand.orgName} in partnership with the Federal`,
         `Ministry of Education, with support from the World Bank under the IDEAS-TVET Initiative.`,
         '',
         `The above-named trainee has been duly placed for a 3-month practical internship program`,
@@ -381,24 +458,24 @@ export default function StudentDocuments() {
       doc.setTextColor(10, 22, 40)
       doc.text('Authorised Signatory', margin, y)
       y += 5
-      doc.setDrawColor(10, 22, 40)
+      doc.setDrawColor(pr, pg, pb)
       doc.setLineWidth(0.5)
       doc.line(margin, y, margin + 60, y)
       y += 8
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(9)
       doc.setTextColor(51, 65, 85)
-      doc.text('Web3.0 Alliance Limited', margin, y)
+      doc.text(brand.orgName, margin, y)
       y += 5
       doc.text('IDEAS-TVET Program Coordinator', margin, y)
 
-      doc.setFillColor(10, 22, 40)
+      doc.setFillColor(pr, pg, pb)
       doc.rect(0, 282, pageW, 15, 'F')
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(7)
       doc.setFont('helvetica', 'normal')
       doc.text(
-        'Web3.0 Alliance Ltd | IDEAS-TVET Initiative | Plateau State Polytechnic, Jos | Contract: IDEAS-TVET2/NPCU/PLATEAU/05.26/304',
+        `${brand.orgName} | IDEAS-TVET Initiative | ${brand.address} | Contract: IDEAS-TVET2/NPCU/PLATEAU/05.26/304`,
         pageW / 2, 290, { align: 'center' }
       )
 
@@ -470,7 +547,7 @@ export default function StudentDocuments() {
           <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, fontSize: 13, color: '#166534', lineHeight: 1.6 }}>
             📌 <strong>Your Official Student ID Card</strong> — This card contains your full name, trainee ID number, passport photo, programme details, and training venue. Download it as a high-quality PNG image and print it for use as your official identification throughout the programme. <strong>Upload your passport photo first</strong> for the best result.
           </div>
-          <StudentIDCard profile={profile} />
+          <StudentIDCard profile={profile} brand={brand} />
         </div>
       </div>
 

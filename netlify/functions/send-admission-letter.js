@@ -25,8 +25,10 @@ async function updateLog(logId, status) {
   } catch (_) {}
 }
 
-function buildHTML({ full_name, id_number, admission_link, email }) {
-  const logo = `${APP_URL}/logo.png`
+function buildHTML({ full_name, id_number, admission_link, email, tsp_logo, tsp_name, tsp_primary_color }) {
+  const logo = tsp_logo || `${APP_URL}/logo.png`
+  const orgName = tsp_name || 'Web3.0 Alliance Limited'
+  const primaryColor = tsp_primary_color || '#0a2e14'
   const tg = 'https://t.me/+pORFwMgPhCMyZmRk'
   const link = admission_link || `${APP_URL}/dashboard`
 
@@ -40,9 +42,9 @@ function buildHTML({ full_name, id_number, admission_link, email }) {
 <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10);max-width:600px;width:100%;">
 
 <!-- HEADER -->
-<tr><td style="background:linear-gradient(135deg,#0a2e14,#1a7a3c);padding:28px 40px 20px;">
-  <img src="${logo}" alt="Web3.0 Alliance" style="height:44px;width:auto;display:block;margin-bottom:8px;"/>
-  <div style="color:#fff;font-size:18px;font-weight:bold;">WEB3.0 ALLIANCE LIMITED</div>
+<tr><td style="background:linear-gradient(135deg,${primaryColor},${primaryColor}cc);padding:28px 40px 20px;">
+  <img src="${logo}" alt="${orgName}" style="height:44px;width:auto;display:block;margin-bottom:8px;"/>
+  <div style="color:#fff;font-size:18px;font-weight:bold;">${orgName.toUpperCase()}</div>
   <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:2px;">IDEAS-TVET Programme — Plateau State</div>
 </td></tr>
 <tr><td style="height:4px;background:linear-gradient(90deg,#c8a82a,#1a7a3c);"></td></tr>
@@ -98,7 +100,7 @@ function buildHTML({ full_name, id_number, admission_link, email }) {
 </td></tr>
 
 <!-- FOOTER -->
-<tr><td style="background:linear-gradient(135deg,#0a2e14,#1a7a3c);padding:20px 40px;">
+<tr><td style="background:linear-gradient(135deg,${primaryColor},${primaryColor}cc);padding:20px 40px;">
   <div style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:bold;">Web3.0 Alliance Limited</div>
   <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px;">IDEAS-TVET Initiative · Plateau State Polytechnic, Jos</div>
   <div style="color:rgba(255,255,255,0.6);font-size:11px;">ideas@theweb3alliance.org · ideas.theweb3alliance.org</div>
@@ -118,7 +120,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body) }
   catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON' }) } }
 
-  const { full_name, email, id_number, admission_token, admission_link, log_id } = body
+  const { full_name, email, id_number, admission_token, admission_link, log_id, tsp_logo, tsp_name, tsp_primary_color } = body
 
   if (!full_name || !email || !id_number) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'full_name, email, id_number required' }) }
@@ -134,7 +136,7 @@ exports.handler = async (event) => {
         from: `IDEAS-TVET Programme <${FROM_EMAIL}>`,
         to: [email],
         subject: `🎓 Congratulations ${full_name} — Your IDEAS-TVET Admission Offer`,
-        html: buildHTML({ full_name, id_number, admission_link: finalLink, email }),
+        html: buildHTML({ full_name, id_number, admission_link: finalLink, email, tsp_logo, tsp_name, tsp_primary_color }),
       }),
     })
 
