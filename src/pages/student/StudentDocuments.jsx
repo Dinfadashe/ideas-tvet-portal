@@ -266,6 +266,8 @@ export default function StudentDocuments() {
     pmName: tsp?.pm_name || 'Jeh Yusuph Dilas',
     projectName: tsp?.project_name || 'IDEAS-TVET Initiative',
     trade: tsp?.trade || 'Computer Hardware & Cellphone Repairs',
+    internship_start: tsp?.internship_start || null,
+    internship_end: tsp?.internship_end || null,
   }
 
   useEffect(() => {
@@ -384,11 +386,11 @@ export default function StudentDocuments() {
       doc.text('TO WHOM IT MAY CONCERN', margin, y)
       y += 10
 
-      const startDate = '15th September 2026'
+      const startDate = brand?.internship_start || '15th September 2026'
 
 
 
-      const endDate = '15th December 2026'
+      const endDate = brand?.internship_end || '15th December 2026'
 
 
 
@@ -408,7 +410,7 @@ export default function StudentDocuments() {
         'guidance, supervision, and a conducive learning environment throughout the internship period.',
         '',
         'All interns are covered under the program welfare framework. For enquiries or verification,',
-        'please contact: official@theweb3alliance.org | Tel: 09031799036 / 09034574203 / 08166019703',
+        `please contact: ${brand.email} | Tel: ${tsp ? [tsp.pm_phone, tsp.phone].filter(Boolean).join(' / ') : '09031799036 / 09034574203 / 08166019703'}`,
       ]
 
       lines.forEach(line => {
