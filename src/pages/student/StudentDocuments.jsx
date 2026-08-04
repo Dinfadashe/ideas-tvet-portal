@@ -384,13 +384,13 @@ export default function StudentDocuments() {
       doc.text('TO WHOM IT MAY CONCERN', margin, y)
       y += 10
 
-      const startDate = profile?.internship_started_at
-        ? new Date(profile.internship_started_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-        : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      const startDate = '15th September 2026'
 
-      const endDate = profile?.internship_started_at
-        ? new Date(new Date(profile.internship_started_at).setMonth(new Date(profile.internship_started_at).getMonth() + 3)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-        : new Date(new Date().setMonth(new Date().getMonth() + 3)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+
+
+      const endDate = '15th December 2026'
+
+
 
       const lines = [
         `This is to certify that ${profile?.full_name?.toUpperCase()}, with NIN: ${profile?.nin || 'N/A'},`,
@@ -408,7 +408,7 @@ export default function StudentDocuments() {
         'guidance, supervision, and a conducive learning environment throughout the internship period.',
         '',
         'All interns are covered under the program welfare framework. For enquiries or verification,',
-        'please contact: official@theweb3alliance.org or call our office.',
+        'please contact: official@theweb3alliance.org | Tel: 09031799036 / 09034574203 / 08166019703',
       ]
 
       lines.forEach(line => {
