@@ -18,6 +18,8 @@ import AdminStudentDetail from './pages/admin/AdminStudentDetail.jsx'
 import AdminImportStudents from './pages/admin/AdminImportStudents.jsx'
 import AdminLogbooks from './pages/admin/AdminLogbooks.jsx'
 import AdminTSPs from './pages/admin/AdminTSPs.jsx'
+import AdminAssignInstructors from './pages/admin/AdminAssignInstructors.jsx'
+import AdminInstructors from './pages/admin/AdminInstructors.jsx'
 
 // Student pages
 import StudentLayout from './components/student/StudentLayout.jsx'
@@ -25,6 +27,10 @@ import StudentDashboard from './pages/student/StudentDashboard.jsx'
 import StudentProfile from './pages/student/StudentProfile.jsx'
 import StudentLogbook from './pages/student/StudentLogbook.jsx'
 import StudentDocuments from './pages/student/StudentDocuments.jsx'
+import StudentPerformance from './pages/student/StudentPerformance.jsx'
+
+// Instructor pages
+import InstructorDashboard from './pages/instructor/InstructorDashboard.jsx'
 
 // TSP pages
 import RegisterTSP from './pages/tsp/RegisterTSP.jsx'
@@ -80,7 +86,7 @@ function LogbookGuard({ children }) {
   return children
 }
 
-function ProtectedRoute({ children, requireAdmin = false, requireTSP = false }) {
+function ProtectedRoute({ children, requireAdmin = false, requireTSP = false, requireInstructor = false }) {
   const { user, profile, loading } = useAuth()
 
   if (loading) return (
@@ -99,6 +105,10 @@ function ProtectedRoute({ children, requireAdmin = false, requireTSP = false }) 
   }
 
   if (requireTSP && profile?.role !== 'tsp') {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (requireInstructor && profile?.role !== 'instructor') {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -123,6 +133,7 @@ function AppRoutes() {
           ? <Navigate to={
               profile?.role === 'admin' ? '/admin' :
               profile?.role === 'tsp' ? '/tsp/dashboard' :
+              profile?.role === 'instructor' ? '/instructor' :
               '/dashboard'
             } replace />
           : <LoginPage />
@@ -146,6 +157,7 @@ function AppRoutes() {
         <Route path="profile" element={<StudentProfile />} />
         <Route path="logbook" element={<LogbookGuard><StudentLogbook /></LogbookGuard>} />
         <Route path="documents" element={<StudentDocuments />} />
+        <Route path="performance" element={<StudentPerformance />} />
       </Route>
 
       {/* Admin routes */}
@@ -160,7 +172,16 @@ function AppRoutes() {
         <Route path="import" element={<AdminImportStudents />} />
         <Route path="logbooks" element={<AdminLogbooks />} />
         <Route path="tsps" element={<AdminTSPs />} />
+        <Route path="instructors" element={<AdminInstructors />} />
+        <Route path="assign-instructors" element={<AdminAssignInstructors />} />
       </Route>
+
+      {/* Instructor routes */}
+      <Route path="/instructor" element={
+        <ProtectedRoute requireInstructor>
+          <InstructorDashboard />
+        </ProtectedRoute>
+      } />
 
       {/* TSP routes */}
       <Route path="/tsp/dashboard" element={
@@ -183,6 +204,7 @@ function AppRoutes() {
           : <Navigate to={
               profile.role === 'admin' ? '/admin' :
               profile.role === 'tsp' ? '/tsp/dashboard' :
+              profile.role === 'instructor' ? '/instructor' :
               '/dashboard'
             } replace />
       } />
