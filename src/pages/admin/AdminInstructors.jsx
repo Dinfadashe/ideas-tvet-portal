@@ -45,39 +45,19 @@ export default function AdminInstructors() {
     }
     setInviting(true)
     try {
-      // 1. Create auth user via import function
-      const res = await fetch('/.netlify/functions/import-students', {
+      const res = await fetch('/.netlify/functions/invite-instructor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          rows: [{ email: form.email.toLowerCase().trim(), full_name: form.full_name.trim() }]
+          full_name: form.full_name.trim(),
+          email: form.email.toLowerCase().trim(),
+          phone: form.phone || null,
         }),
       })
       const result = await res.json()
-      if (!res.ok) throw new Error(result.error || 'Failed to create account')
-
-      // 2. Update profile to role=instructor and set phone
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          role: 'instructor',
-          phone: form.phone || null,
-          password_changed: false,
-        })
-        .eq('email', form.email.toLowerCase().trim())
-
-      if (updateError) throw updateError
-
-      // 3. Send invite email
-      const emailRes = await fetch('/.netlify/functions/send-instructor-invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: form.full_name.trim(), email: form.email.toLowerCase().trim() }),
-      })
-      const emailResult = await emailRes.json()
-      if (!emailRes.ok) {
-        console.error('Email error:', emailResult)
-        toast.error(`Account created but email failed: ${emailResult.error}`)
+      if (!res.ok) throw new Error(result.error || 'Failed to invite instructor')
+      if (result.warning) {
+        toast.success(`Account created for ${form.full_name} but email failed — resend manually.`)
       } else {
         toast.success(`Invitation sent to ${form.full_name}!`)
       }
