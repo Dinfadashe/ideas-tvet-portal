@@ -101,15 +101,18 @@ function ProtectedRoute({ children, requireAdmin = false, requireTSP = false, re
   if (!user) return <Navigate to="/login" replace />
 
   if (requireAdmin && profile?.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />
+    const home = profile?.role === 'instructor' ? '/instructor' : profile?.role === 'tsp' ? '/tsp/dashboard' : '/dashboard'
+    return <Navigate to={home} replace />
   }
 
   if (requireTSP && profile?.role !== 'tsp') {
-    return <Navigate to="/dashboard" replace />
+    const home = profile?.role === 'instructor' ? '/instructor' : '/dashboard'
+    return <Navigate to={home} replace />
   }
 
   if (requireInstructor && profile?.role !== 'instructor') {
-    return <Navigate to="/dashboard" replace />
+    const home = profile?.role === 'admin' ? '/admin' : profile?.role === 'tsp' ? '/tsp/dashboard' : '/dashboard'
+    return <Navigate to={home} replace />
   }
 
   // Force password change on first login

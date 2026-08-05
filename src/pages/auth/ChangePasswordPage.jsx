@@ -50,7 +50,7 @@ export default function ChangePasswordPage() {
 
       // Step 5: hard redirect — bypasses React Router and all context race conditions
       setTimeout(() => {
-        window.location.replace(fresh?.role === 'admin' ? '/admin' : '/dashboard')
+        const r = fresh?.role; window.location.replace(r === 'admin' ? '/admin' : r === 'instructor' ? '/instructor' : r === 'tsp' ? '/tsp/dashboard' : '/dashboard')
       }, 800)
     } catch (err) {
       toast.error(err.message || 'Failed to update password.')
