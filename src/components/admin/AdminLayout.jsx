@@ -4,14 +4,13 @@ import { useAuth } from '../../hooks/useAuth.jsx'
 import toast from 'react-hot-toast'
 import {
   LayoutDashboard, Users, Upload, BookOpen,
-  LogOut, Menu, X, ChevronDown, Bell
+  LogOut, Menu, GraduationCap, UserCheck, Building2
 } from 'lucide-react'
 
 export default function AdminLayout() {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [pageTitle, setPageTitle] = useState('Dashboard')
 
   async function handleSignOut() {
     try {
@@ -27,6 +26,15 @@ export default function AdminLayout() {
     { to: '/admin/students', label: 'Students', icon: Users },
     { to: '/admin/import', label: 'Import Students', icon: Upload },
     { to: '/admin/logbooks', label: 'Logbooks', icon: BookOpen },
+  ]
+
+  const instructorItems = [
+    { to: '/admin/instructors', label: 'Instructors', icon: GraduationCap },
+    { to: '/admin/assign-instructors', label: 'Assign Trainees', icon: UserCheck },
+  ]
+
+  const systemItems = [
+    { to: '/admin/tsps', label: 'TSP Management', icon: Building2 },
   ]
 
   return (
@@ -50,6 +58,8 @@ export default function AdminLayout() {
         </div>
 
         <div className="sidebar-nav">
+
+          {/* Management */}
           <div className="nav-section-label">Management</div>
           {navItems.map(item => (
             <NavLink
@@ -63,6 +73,35 @@ export default function AdminLayout() {
               {item.label}
             </NavLink>
           ))}
+
+          {/* Instructors */}
+          <div className="nav-section-label" style={{ marginTop: 16 }}>Instructors</div>
+          {instructorItems.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <item.icon size={16} />
+              {item.label}
+            </NavLink>
+          ))}
+
+          {/* System */}
+          <div className="nav-section-label" style={{ marginTop: 16 }}>System</div>
+          {systemItems.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <item.icon size={16} />
+              {item.label}
+            </NavLink>
+          ))}
+
         </div>
 
         <div className="sidebar-footer">
