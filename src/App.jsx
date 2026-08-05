@@ -123,6 +123,18 @@ function ProtectedRoute({ children, requireAdmin = false, requireTSP = false, re
   return children
 }
 
+
+// Prevents non-students from accessing /dashboard
+function StudentGuard({ children }) {
+  const { profile, loading } = useAuth()
+  if (loading) return null
+  if (!profile) return null
+  if (profile.role === 'instructor') return <Navigate to="/instructor" replace />
+  if (profile.role === 'admin') return <Navigate to="/admin" replace />
+  if (profile.role === 'tsp') return <Navigate to="/tsp/dashboard" replace />
+  return children
+}
+
 function AppRoutes() {
   const { user, profile, loading } = useAuth()
 
@@ -153,7 +165,9 @@ function AppRoutes() {
       {/* Student routes */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <StudentLayout />
+          <StudentGuard>
+            <StudentLayout />
+          </StudentGuard>
         </ProtectedRoute>
       }>
         <Route index element={<StudentDashboard />} />
