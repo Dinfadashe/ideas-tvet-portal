@@ -69,13 +69,18 @@ export default function AdminInstructors() {
       if (updateError) throw updateError
 
       // 3. Send invite email
-      await fetch('/.netlify/functions/send-instructor-invite', {
+      const emailRes = await fetch('/.netlify/functions/send-instructor-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name: form.full_name.trim(), email: form.email.toLowerCase().trim() }),
       })
-
-      toast.success(`Invitation sent to ${form.full_name}!`)
+      const emailResult = await emailRes.json()
+      if (!emailRes.ok) {
+        console.error('Email error:', emailResult)
+        toast.error(`Account created but email failed: ${emailResult.error}`)
+      } else {
+        toast.success(`Invitation sent to ${form.full_name}!`)
+      }
       setForm({ full_name: '', email: '', phone: '' })
       setShowInvite(false)
       fetchInstructors()
