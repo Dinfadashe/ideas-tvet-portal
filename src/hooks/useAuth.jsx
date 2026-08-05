@@ -40,12 +40,13 @@ export function AuthProvider({ children }) {
       if (error) {
         // PGRST116 = no row found — auto-create the profile row
         if (error.code === 'PGRST116') {
+          const metaRole = currentUser.user_metadata?.role || 'student'
           const newProfile = {
             id: currentUser.id,
             email: currentUser.email,
             full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
-            role: 'student',
-            status: 'pending',
+            role: metaRole,
+            status: metaRole === 'student' ? 'pending' : null,
             profile_updated: false,
             password_changed: currentUser.user_metadata?.password_changed || false,
           }
