@@ -4,8 +4,9 @@ import { useAuth } from '../../hooks/useAuth.jsx'
 import toast from 'react-hot-toast'
 import {
   LayoutDashboard, Users, Upload, BookOpen,
-  LogOut, Menu, GraduationCap, UserCheck, Building2
+  LogOut, Menu, GraduationCap, UserCheck, Building2, FileCheck
 } from 'lucide-react'
+import NotificationBell from './NotificationBell.jsx'
 
 export default function AdminLayout() {
   const { profile, signOut } = useAuth()
@@ -26,6 +27,7 @@ export default function AdminLayout() {
     { to: '/admin/students', label: 'Students', icon: Users },
     { to: '/admin/import', label: 'Import Students', icon: Upload },
     { to: '/admin/logbooks', label: 'Logbooks', icon: BookOpen },
+    { to: '/admin/acceptance-letters', label: 'Acceptance Letters', icon: FileCheck },
   ]
 
   const instructorItems = [
@@ -133,7 +135,8 @@ export default function AdminLayout() {
               <span style={{ fontSize: 12, color: '#334155', fontWeight: 500 }}>Admin</span>
             </div>
           </div>
-          <div className="topbar-right">
+          <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <NotificationBell />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', borderRadius: 8, padding: '6px 12px', fontSize: 13 }}>
               <div style={{ width: 28, height: 28, background: '#0a1628', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 700 }}>
                 {profile?.full_name?.charAt(0) || 'A'}

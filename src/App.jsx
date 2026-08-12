@@ -20,6 +20,7 @@ import AdminLogbooks from './pages/admin/AdminLogbooks.jsx'
 import AdminTSPs from './pages/admin/AdminTSPs.jsx'
 import AdminAssignInstructors from './pages/admin/AdminAssignInstructors.jsx'
 import AdminInstructors from './pages/admin/AdminInstructors.jsx'
+import AdminAcceptanceLetters from './pages/admin/AdminAcceptanceLetters.jsx'
 
 // Student pages
 import StudentLayout from './components/student/StudentLayout.jsx'
@@ -37,30 +38,30 @@ import RegisterTSP from './pages/tsp/RegisterTSP.jsx'
 import TSPDashboard from './pages/tsp/TSPDashboard.jsx'
 import TSPRenew from './pages/tsp/TSPRenew.jsx'
 
-// Checks if student has uploaded an internship acceptance letter
+// Checks if student has an APPROVED internship acceptance letter
 function LogbookGuard({ children }) {
   const { profile } = useAuth()
-  const [hasAcceptance, setHasAcceptance] = useState(null)
+  const [hasApproved, setHasApproved] = useState(null)
 
   useEffect(() => {
     async function check() {
       if (!profile?.id) return
       const { data } = await supabase
         .from('documents')
-        .select('id')
+        .select('id, status')
         .eq('student_id', profile.id)
         .eq('document_type', 'acceptance_letter')
         .limit(1)
-      setHasAcceptance(data && data.length > 0)
+      setHasApproved(data && data.length > 0 && data[0].status === 'approved')
     }
     check()
   }, [profile?.id])
 
-  if (hasAcceptance === null) return (
+  if (hasApproved === null) return (
     <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Checking access...</div>
   )
 
-  if (!hasAcceptance) return (
+  if (!hasApproved) return (
     <div style={{ padding: 40, maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
       <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
       <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0a2e14', marginBottom: 12 }}>
@@ -68,14 +69,14 @@ function LogbookGuard({ children }) {
       </h2>
       <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
         Your internship logbook will be unlocked once you have uploaded your signed
-        <strong> Internship Acceptance Letter</strong> from your host organisation.
+        <strong> Internship Acceptance Letter</strong> and it has been <strong>approved</strong> by your administrator.
       </p>
       <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '16px 20px', fontSize: 13, color: '#166534', lineHeight: 1.7, marginBottom: 24 }}>
         <strong>How to unlock:</strong><br/>
         1. Secure an internship host organisation<br/>
         2. Collect a signed Acceptance Letter on their letterhead<br/>
         3. Go to <strong>Documents</strong> and upload it<br/>
-        4. Your logbook will be unlocked automatically
+        4. Wait for admin approval — your logbook unlocks automatically
       </div>
       <a href="/dashboard/documents" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #0a2e14, #1a7a3c)', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 14, padding: '12px 28px', borderRadius: 8 }}>
         Go to Documents →
@@ -191,6 +192,7 @@ function AppRoutes() {
         <Route path="tsps" element={<AdminTSPs />} />
         <Route path="instructors" element={<AdminInstructors />} />
         <Route path="assign-instructors" element={<AdminAssignInstructors />} />
+        <Route path="acceptance-letters" element={<AdminAcceptanceLetters />} />
       </Route>
 
       {/* Instructor routes */}
