@@ -57,6 +57,18 @@ export default function AdminAcceptanceLetters() {
         .update({ read: true })
         .eq('document_id', doc.id)
 
+      // Send approval email to student
+      await fetch('/.netlify/functions/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: doc.profile?.email,
+          subject: '✅ Your Internship Acceptance Letter Has Been Approved',
+          type: 'acceptance_approved',
+          full_name: doc.profile?.full_name,
+        }),
+      })
+
       toast.success(`Approved — ${doc.profile?.full_name} can now access their logbook`)
       setSelected(null)
       fetchLetters()
@@ -87,7 +99,20 @@ export default function AdminAcceptanceLetters() {
         .update({ read: true })
         .eq('document_id', doc.id)
 
-      toast.success(`Rejected — ${doc.profile?.full_name} will be notified`)
+      // Send rejection email to student with reason
+      await fetch('/.netlify/functions/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: doc.profile?.email,
+          subject: '❌ Your Internship Acceptance Letter Was Not Approved',
+          type: 'acceptance_rejected',
+          full_name: doc.profile?.full_name,
+          reason: rejectionReason,
+        }),
+      })
+
+      toast.success(`Rejected — ${doc.profile?.full_name} has been notified by email`)
       setSelected(null)
       setRejectionReason('')
       fetchLetters()
