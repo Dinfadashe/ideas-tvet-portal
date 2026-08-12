@@ -16,13 +16,15 @@ export default function AdminInstructors() {
 
   async function fetchInstructors() {
     setLoading(true)
-    const { data } = await supabase
+    const { data: inst, error } = await supabase
       .from('profiles')
-      .select('*, trainee_count:profiles!instructor_id(count)')
+      .select('*')
       .eq('role', 'instructor')
       .order('created_at', { ascending: false })
 
-    // Get trainee count per instructor
+    if (error) console.error('Fetch instructors error:', error)
+
+    // Get trainee count per instructor separately
     const { data: counts } = await supabase
       .from('profiles')
       .select('instructor_id')
@@ -34,7 +36,7 @@ export default function AdminInstructors() {
       countMap[c.instructor_id] = (countMap[c.instructor_id] || 0) + 1
     })
 
-    setInstructors((data || []).map(i => ({ ...i, trainee_count: countMap[i.id] || 0 })))
+    setInstructors((inst || []).map(i => ({ ...i, trainee_count: countMap[i.id] || 0 })))
     setLoading(false)
   }
 
