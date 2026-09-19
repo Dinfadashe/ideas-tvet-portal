@@ -1,7 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
-import { supabase } from './lib/supabase.js'
 
 // Auth pages
 import LoginPage from './pages/auth/LoginPage.jsx'
@@ -37,55 +35,6 @@ import InstructorDashboard from './pages/instructor/InstructorDashboard.jsx'
 import RegisterTSP from './pages/tsp/RegisterTSP.jsx'
 import TSPDashboard from './pages/tsp/TSPDashboard.jsx'
 import TSPRenew from './pages/tsp/TSPRenew.jsx'
-
-// Checks if student has an APPROVED internship acceptance letter
-function LogbookGuard({ children }) {
-  const { profile } = useAuth()
-  const [hasApproved, setHasApproved] = useState(null)
-
-  useEffect(() => {
-    async function check() {
-      if (!profile?.id) return
-      const { data } = await supabase
-        .from('documents')
-        .select('id, status')
-        .eq('student_id', profile.id)
-        .eq('document_type', 'acceptance_letter')
-        .limit(1)
-      setHasApproved(data && data.length > 0 && data[0].status === 'approved')
-    }
-    check()
-  }, [profile?.id])
-
-  if (hasApproved === null) return (
-    <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Checking access...</div>
-  )
-
-  if (!hasApproved) return (
-    <div style={{ padding: 40, maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
-      <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
-      <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0a2e14', marginBottom: 12 }}>
-        Logbook Not Yet Available
-      </h2>
-      <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
-        Your internship logbook will be unlocked once you have uploaded your signed
-        <strong> Internship Acceptance Letter</strong> and it has been <strong>approved</strong> by your administrator.
-      </p>
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '16px 20px', fontSize: 13, color: '#166534', lineHeight: 1.7, marginBottom: 24 }}>
-        <strong>How to unlock:</strong><br/>
-        1. Secure an internship host organisation<br/>
-        2. Collect a signed Acceptance Letter on their letterhead<br/>
-        3. Go to <strong>Documents</strong> and upload it<br/>
-        4. Wait for admin approval — your logbook unlocks automatically
-      </div>
-      <a href="/dashboard/documents" style={{ display: 'inline-block', background: 'linear-gradient(135deg, #0a2e14, #1a7a3c)', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 14, padding: '12px 28px', borderRadius: 8 }}>
-        Go to Documents →
-      </a>
-    </div>
-  )
-
-  return children
-}
 
 function ProtectedRoute({ children, requireAdmin = false, requireTSP = false, requireInstructor = false }) {
   const { user, profile, loading } = useAuth()
@@ -123,7 +72,6 @@ function ProtectedRoute({ children, requireAdmin = false, requireTSP = false, re
 
   return children
 }
-
 
 // Prevents non-students from accessing /dashboard
 function StudentGuard({ children }) {
@@ -173,7 +121,7 @@ function AppRoutes() {
       }>
         <Route index element={<StudentDashboard />} />
         <Route path="profile" element={<StudentProfile />} />
-        <Route path="logbook" element={<LogbookGuard><StudentLogbook /></LogbookGuard>} />
+        <Route path="logbook" element={<StudentLogbook />} />
         <Route path="documents" element={<StudentDocuments />} />
         <Route path="performance" element={<StudentPerformance />} />
       </Route>
