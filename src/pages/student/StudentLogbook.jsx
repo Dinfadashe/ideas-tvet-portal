@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth.jsx'
 import { supabase } from '../../lib/supabase.js'
 import toast from 'react-hot-toast'
-import { BookOpen, ChevronDown, ChevronRight, Save, Lock, Calendar } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronRight, Save, Calendar } from 'lucide-react'
 
 export default function StudentLogbook() {
   const { profile } = useAuth()
@@ -12,8 +12,6 @@ export default function StudentLogbook() {
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [openWeeks, setOpenWeeks] = useState({ 1: true })
-
-  const isIntern = profile?.status === 'intern'
 
   useEffect(() => {
     if (profile?.id) fetchEntries()
@@ -83,23 +81,6 @@ export default function StudentLogbook() {
 
   const totalFilled = entries.filter(e => e.activities_performed?.trim()).length
   const totalEntries = entries.length
-
-  if (!isIntern) {
-    return (
-      <div>
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 800, color: '#0a1628' }}>Logbook</h1>
-        </div>
-        <div className="empty-state" style={{ background: 'white', borderRadius: 16, border: '1px solid #e2e8f0', padding: '64px 32px' }}>
-          <BookOpen size={48} style={{ margin: '0 auto 16px', display: 'block', color: '#cbd5e1' }} />
-          <h3 style={{ fontFamily: 'Syne', fontSize: 18, color: '#94a3b8', marginBottom: 8 }}>Logbook Not Yet Available</h3>
-          <p style={{ fontSize: 14, color: '#94a3b8', maxWidth: 360, margin: '0 auto' }}>
-            Your logbook will be activated once your administrator marks you as an intern. Check back after your internship placement.
-          </p>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div>
