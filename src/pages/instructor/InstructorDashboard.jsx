@@ -1,5 +1,6 @@
 // src/pages/instructor/InstructorDashboard.jsx
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import toast from 'react-hot-toast'
@@ -8,16 +9,18 @@ const MONTHS = ['September 2026', 'October 2026', 'November 2026']
 
 export default function InstructorDashboard() {
   const { user, profile } = useAuth()
+  const navigate = useNavigate()
   const [trainees, setTrainees] = useState([])
   const [selected, setSelected] = useState(null)
   const [logbook, setLogbook] = useState([])
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
-  const [reviewModal, setReviewModal] = useState(null) // { trainee, month, monthNumber }
+  const [reviewModal, setReviewModal] = useState(null)
   const [score, setScore] = useState(5)
   const [comments, setComments] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [search, setSearch] = useState('')
+  const [showDetail, setShowDetail] = useState(false) // mobile: toggle between list and detail
 
   useEffect(() => { if (user) fetchTrainees() }, [user])
   useEffect(() => { if (selected) { fetchLogbook(); fetchReviews() } }, [selected])
@@ -55,6 +58,16 @@ export default function InstructorDashboard() {
     setReviews(data || [])
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
+  function selectTrainee(t) {
+    setSelected(t)
+    setShowDetail(true) // on mobile, switch to detail view
+  }
+
   async function submitReview() {
     if (!reviewModal) return
     setSubmitting(true)
@@ -69,7 +82,6 @@ export default function InstructorDashboard() {
           score,
           comments,
         }, { onConflict: 'trainee_id,month_number' })
-
       if (error) throw error
       toast.success(`Review submitted for ${reviewModal.month}`)
       setReviewModal(null)
@@ -109,306 +121,533 @@ export default function InstructorDashboard() {
   const stats = {
     total: trainees.length,
     withAcceptance: trainees.filter(t => t.status === 'intern').length,
-    reviewed: new Set(reviews.map(r => r.trainee_id)).size,
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f4f8', fontFamily: 'Arial, sans-serif' }}>
+    <>
+      <style>{`
+        * { box-sizing: border-box; }
 
-      {/* ── HEADER ── */}
-      <div style={{ background: 'linear-gradient(135deg, #0a2e14, #1a7a3c)', padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' }}>IDEAS-TVET Portal</div>
-          <div style={{ color: '#fff', fontSize: 20, fontWeight: 800, marginTop: 2 }}>Instructor Dashboard</div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 2 }}>
-            Welcome, {profile?.full_name || user?.email}
+        .instructor-root {
+          min-height: 100vh;
+          background: #f0f4f8;
+          font-family: Arial, sans-serif;
+        }
+
+        /* ── HEADER ── */
+        .inst-header {
+          background: linear-gradient(135deg, #0a2e14, #1a7a3c);
+          padding: 16px 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .inst-header-left .label {
+          color: rgba(255,255,255,0.6);
+          font-size: 11px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+        .inst-header-left .title {
+          color: #fff;
+          font-size: 18px;
+          font-weight: 800;
+          margin-top: 2px;
+        }
+        .inst-header-left .welcome {
+          color: rgba(255,255,255,0.6);
+          font-size: 12px;
+          margin-top: 2px;
+        }
+        .inst-header-right {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        .stat-pill {
+          background: rgba(255,255,255,0.1);
+          border-radius: 10px;
+          padding: 8px 14px;
+          text-align: center;
+        }
+        .stat-pill .num { font-size: 20px; font-weight: 900; }
+        .stat-pill .lbl { color: rgba(255,255,255,0.6); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .signout-btn {
+          background: rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.25);
+          border-radius: 8px;
+          padding: 9px 14px;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          white-space: nowrap;
+        }
+        .signout-btn:hover { background: rgba(255,255,255,0.22); }
+
+        /* ── BODY LAYOUT ── */
+        .inst-body {
+          display: grid;
+          grid-template-columns: 300px 1fr;
+          height: calc(100vh - 80px);
+        }
+
+        /* ── TRAINEE LIST ── */
+        .trainee-list {
+          background: #fff;
+          border-right: 1px solid #e2e8f0;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        .trainee-search {
+          padding: 12px;
+          border-bottom: 1px solid #f1f5f9;
+        }
+        .trainee-search input {
+          width: 100%;
+          padding: 9px 12px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          font-size: 13px;
+          outline: none;
+        }
+        .trainee-items { flex: 1; overflow-y: auto; }
+        .trainee-item {
+          padding: 12px 14px;
+          border-bottom: 1px solid #f8fafc;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          transition: all 0.1s;
+        }
+        .trainee-item.active {
+          background: #f0fdf4;
+          border-left: 3px solid #1a7a3c;
+        }
+        .trainee-item:not(.active) { border-left: 3px solid transparent; }
+        .trainee-avatar {
+          width: 38px; height: 38px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: #f0fdf4;
+          border: 2px solid #bbf7d0;
+          flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 17px;
+        }
+        .trainee-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .trainee-name { font-weight: 700; font-size: 13px; color: #0a2e14; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .trainee-id { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+        .status-dot {
+          width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+
+        /* ── DETAIL PANEL ── */
+        .detail-panel { overflow-y: auto; padding: 20px; }
+        .empty-state {
+          display: flex; align-items: center; justify-content: center;
+          height: 100%; flex-direction: column; gap: 10px;
+        }
+
+        /* Cards */
+        .card {
+          background: #fff;
+          border-radius: 12px;
+          padding: 20px;
+          margin-bottom: 16px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .card-title {
+          font-size: 13px; font-weight: 700; color: #0a2e14;
+          margin-bottom: 14px;
+        }
+
+        /* Profile card */
+        .profile-card { display: flex; gap: 16px; align-items: flex-start; }
+        .profile-photo {
+          width: 70px; height: 70px;
+          border-radius: 10px;
+          overflow: hidden;
+          background: #f0fdf4;
+          border: 3px solid #bbf7d0;
+          flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 32px;
+        }
+        .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-name { font-size: 18px; font-weight: 800; color: #0a2e14; margin-bottom: 4px; }
+        .profile-badge {
+          display: inline-block;
+          background: #1a7a3c; color: #fff;
+          font-size: 10px; font-weight: 700;
+          padding: 2px 10px; border-radius: 20px;
+          margin-bottom: 10px;
+        }
+        .profile-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px 14px;
+        }
+        .profile-field-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .profile-field-value { font-size: 12px; color: #334155; font-weight: 500; margin-top: 1px; }
+
+        /* Reviews grid */
+        .reviews-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+        }
+        .review-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 14px;
+          position: relative;
+          overflow: hidden;
+        }
+        .review-bar {
+          position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+        .review-month { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .review-score-big { font-size: 32px; font-weight: 900; }
+        .review-score-denom { font-size: 14px; color: #94a3b8; }
+        .review-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .review-comment { font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 8px; font-style: italic; }
+        .edit-btn { font-size: 11px; color: #1a7a3c; background: none; border: none; cursor: pointer; font-weight: 600; padding: 0; }
+        .add-review-btn {
+          background: linear-gradient(135deg, #0a2e14, #1a7a3c);
+          color: #fff; border: none; border-radius: 6px;
+          padding: 7px 10px; font-size: 11px; font-weight: 700;
+          cursor: pointer; width: 100%;
+        }
+
+        /* Logbook entries */
+        .logbook-entry { border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 14px; }
+        .logbook-entry:last-child { border-bottom: none; margin-bottom: 0; }
+
+        /* Warning box */
+        .warning-box {
+          background: #fffbeb; border: 1px solid #fde68a;
+          border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+        }
+
+        /* Mobile back button */
+        .back-btn {
+          display: none;
+          align-items: center;
+          gap: 6px;
+          background: none;
+          border: none;
+          color: #1a7a3c;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          padding: 0 0 14px 0;
+        }
+
+        /* ── MOBILE STYLES ── */
+        @media (max-width: 768px) {
+          .inst-header { padding: 14px 16px; }
+          .inst-header-left .title { font-size: 16px; }
+          .stat-pill { padding: 6px 10px; }
+          .stat-pill .num { font-size: 17px; }
+
+          .inst-body {
+            grid-template-columns: 1fr;
+            height: auto;
+            min-height: calc(100vh - 70px);
+          }
+
+          /* On mobile: show list OR detail, not both */
+          .trainee-list {
+            display: flex;
+            height: calc(100vh - 70px);
+          }
+          .trainee-list.hidden-mobile { display: none; }
+
+          .detail-panel { padding: 14px; }
+          .detail-panel.hidden-mobile { display: none; }
+
+          .back-btn { display: flex; }
+
+          .profile-card { flex-direction: column; align-items: center; text-align: center; }
+          .profile-grid { grid-template-columns: 1fr 1fr; }
+
+          .reviews-grid { grid-template-columns: 1fr; }
+
+          .inst-header-right { width: 100%; justify-content: space-between; }
+        }
+
+        @media (max-width: 480px) {
+          .inst-header-right { flex-wrap: wrap; gap: 8px; }
+          .profile-grid { grid-template-columns: 1fr; }
+          .signout-btn { font-size: 12px; padding: 8px 10px; }
+        }
+      `}</style>
+
+      <div className="instructor-root">
+
+        {/* ── HEADER ── */}
+        <div className="inst-header">
+          <div className="inst-header-left">
+            <div className="label">IDEAS-TVET Portal</div>
+            <div className="title">Instructor Dashboard</div>
+            <div className="welcome">Welcome, {profile?.full_name || user?.email}</div>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 20px', textAlign: 'center' }}>
-            <div style={{ color: '#c8a82a', fontSize: 22, fontWeight: 900 }}>{stats.total}</div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Assigned</div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 20px', textAlign: 'center' }}>
-            <div style={{ color: '#4ade80', fontSize: 22, fontWeight: 900 }}>{stats.withAcceptance}</div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>On Internship</div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', height: 'calc(100vh - 90px)' }}>
-
-        {/* ── TRAINEE LIST ── */}
-        <div style={{ background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ padding: '16px', borderBottom: '1px solid #f1f5f9' }}>
-            <input
-              type="text"
-              placeholder="Search trainees..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none' }}
-            />
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {loading ? (
-              <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Loading trainees...</div>
-            ) : filtered.length === 0 ? (
-              <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-                {trainees.length === 0 ? 'No trainees assigned to you yet.' : 'No results found.'}
-              </div>
-            ) : filtered.map(t => (
-              <div
-                key={t.id}
-                onClick={() => setSelected(t)}
-                style={{
-                  padding: '14px 16px',
-                  borderBottom: '1px solid #f8fafc',
-                  cursor: 'pointer',
-                  background: selected?.id === t.id ? '#f0fdf4' : '#fff',
-                  borderLeft: selected?.id === t.id ? '3px solid #1a7a3c' : '3px solid transparent',
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  transition: 'all 0.1s',
-                }}
-              >
-                {/* Photo */}
-                <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', background: '#f0fdf4', border: '2px solid #bbf7d0', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {t.photo_url
-                    ? <img src={t.photo_url} alt={t.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ fontSize: 18 }}>👤</span>
-                  }
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: '#0a2e14', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.full_name}</div>
-                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{t.id_number}</div>
-                </div>
-
-                <div style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: t.status === 'intern' ? '#16a34a' : '#94a3b8',
-                  flexShrink: 0,
-                }} title={t.status} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── TRAINEE DETAIL ── */}
-        <div style={{ overflowY: 'auto', padding: 24 }}>
-          {!selected ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 48 }}>👈</div>
-              <div style={{ fontSize: 15, color: '#94a3b8' }}>Select a trainee to view their details</div>
+          <div className="inst-header-right">
+            <div className="stat-pill">
+              <div className="num" style={{ color: '#c8a82a' }}>{stats.total}</div>
+              <div className="lbl">Assigned</div>
             </div>
-          ) : (
-            <div>
-
-              {/* Profile card */}
-              <div style={{ background: '#fff', borderRadius: 14, padding: 24, marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-                <div style={{ width: 80, height: 80, borderRadius: 12, overflow: 'hidden', background: '#f0fdf4', border: '3px solid #bbf7d0', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {selected.photo_url
-                    ? <img src={selected.photo_url} alt={selected.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ fontSize: 36 }}>👤</span>
-                  }
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#0a2e14', marginBottom: 4 }}>{selected.full_name}</div>
-                  <div style={{ display: 'inline-block', background: '#1a7a3c', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20, marginBottom: 12 }}>{selected.id_number}</div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 16px' }}>
-                    {[
-                      ['📱 Phone', selected.phone || 'N/A'],
-                      ['🧑 Gender', selected.gender || 'N/A'],
-                      ['📍 State', selected.state_of_origin || 'N/A'],
-                      ['🎂 DOB', selected.date_of_birth || 'N/A'],
-                      ['📊 Status', selected.status?.toUpperCase() || 'N/A'],
-                      ['📧 Email', selected.email || 'N/A'],
-                    ].map(([label, value]) => (
-                      <div key={label}>
-                        <div style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
-                        <div style={{ fontSize: 13, color: '#334155', fontWeight: 500, marginTop: 1 }}>{value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Internship details */}
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0a2e14', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  🏢 Internship Details
-                </div>
-                {selected.internship_company || selected.internship_address ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 20px' }}>
-                    {[
-                      ['Company / Organisation', selected.internship_company || 'Not provided'],
-                      ['Company Address', selected.internship_address || 'Not provided'],
-                      ['Supervisor Name', selected.internship_supervisor || 'Not provided'],
-                      ['Supervisor Phone', selected.internship_supervisor_phone || 'Not provided'],
-                      ['Start Date', '15th September 2026'],
-                      ['End Date', '15th December 2026'],
-                    ].map(([label, value]) => (
-                      <div key={label}>
-                        <div style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>{label}</div>
-                        <div style={{ fontSize: 13, color: '#334155', fontWeight: 500 }}>{value}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 13, color: '#94a3b8', fontStyle: 'italic' }}>
-                    This trainee has not yet provided internship company details. Details will appear here once their logbook is filled.
-                  </div>
-                )}
-              </div>
-
-              {/* Monthly Reviews */}
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0a2e14', marginBottom: 14 }}>⭐ Monthly Reviews</div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-                  {MONTHS.map((month, idx) => {
-                    const review = getReview(idx + 1)
-                    return (
-                      <div key={month} style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, position: 'relative', overflow: 'hidden' }}>
-                        {review && (
-                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${scoreColor(review.score)}, ${scoreColor(review.score)}88)` }} />
-                        )}
-
-                        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{month}</div>
-
-                        {review ? (
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-                              <span style={{ fontSize: 36, fontWeight: 900, color: scoreColor(review.score) }}>{review.score}</span>
-                              <span style={{ fontSize: 16, color: '#94a3b8' }}>/10</span>
-                            </div>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: scoreColor(review.score), marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{scoreLabel(review.score)}</div>
-                            {review.comments && (
-                              <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5, marginBottom: 10, fontStyle: 'italic' }}>"{review.comments}"</div>
-                            )}
-                            <button
-                              onClick={() => { setReviewModal({ month, monthNumber: idx + 1 }); setScore(review.score); setComments(review.comments || '') }}
-                              style={{ fontSize: 11, color: '#1a7a3c', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
-                            >
-                              Edit Review ✏️
-                            </button>
-                          </div>
-                        ) : (
-                          <div>
-                            <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 12, fontStyle: 'italic' }}>No review yet</div>
-                            <button
-                              onClick={() => { setReviewModal({ month, monthNumber: idx + 1 }); setScore(5); setComments('') }}
-                              style={{ background: 'linear-gradient(135deg, #0a2e14, #1a7a3c)', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', width: '100%' }}
-                            >
-                              + Add Review
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Logbook Entries */}
-              <div style={{ background: '#fff', borderRadius: 14, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0a2e14', marginBottom: 14 }}>📋 Logbook Entries</div>
-
-                {logbook.length === 0 ? (
-                  <div style={{ fontSize: 13, color: '#94a3b8', fontStyle: 'italic', padding: '16px 0', textAlign: 'center' }}>
-                    This trainee has not submitted any logbook entries yet.
-                  </div>
-                ) : logbook.map(entry => (
-                  <div key={entry.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 16, marginBottom: 16 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: '#0a2e14' }}>{entry.week_title || `Week ${entry.week_number}`}</div>
-                      <div style={{ fontSize: 11, color: '#94a3b8' }}>{new Date(entry.created_at).toLocaleDateString('en-GB')}</div>
-                    </div>
-                    {entry.activities && (
-                      <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, marginBottom: 6 }}>{entry.activities}</div>
-                    )}
-                    {entry.skills_learned && (
-                      <div style={{ fontSize: 12, color: '#64748b' }}><strong>Skills:</strong> {entry.skills_learned}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
+            <div className="stat-pill">
+              <div className="num" style={{ color: '#4ade80' }}>{stats.withAcceptance}</div>
+              <div className="lbl">On Internship</div>
             </div>
-          )}
+            <button className="signout-btn" onClick={handleSignOut}>
+              🚪 Sign Out
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* ── REVIEW MODAL ── */}
-      {reviewModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-          onClick={e => e.target === e.currentTarget && setReviewModal(null)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 480, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#0a2e14', marginBottom: 4 }}>Monthly Review</div>
-            <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 24 }}>{selected?.full_name} · {reviewModal.month}</div>
+        {/* ── BODY ── */}
+        <div className="inst-body">
 
-            {/* Score selector */}
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Performance Score (1–10)</div>
-
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                  <button
-                    key={n}
-                    onClick={() => setScore(n)}
-                    style={{
-                      width: 44, height: 44,
-                      borderRadius: 8,
-                      border: score === n ? `2px solid ${scoreColor(n)}` : '2px solid #e2e8f0',
-                      background: score === n ? scoreColor(n) : '#fff',
-                      color: score === n ? '#fff' : '#475569',
-                      fontWeight: 800, fontSize: 16,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: 28, fontWeight: 900, color: scoreColor(score) }}>{score}/10</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: scoreColor(score) }}>{scoreLabel(score)}</div>
-              </div>
-            </div>
-
-            {/* Comments */}
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Comments / Feedback</div>
-              <textarea
-                value={comments}
-                onChange={e => setComments(e.target.value)}
-                placeholder="Describe the trainee's performance, areas of improvement, strengths observed..."
-                style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, resize: 'vertical', minHeight: 100, outline: 'none', lineHeight: 1.6 }}
+          {/* ── TRAINEE LIST ── */}
+          <div className={`trainee-list${showDetail ? ' hidden-mobile' : ''}`}>
+            <div className="trainee-search">
+              <input
+                type="text"
+                placeholder="Search trainees..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
               />
             </div>
-
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={() => setReviewModal(null)}
-                style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitReview}
-                disabled={submitting}
-                style={{ flex: 2, padding: '12px', borderRadius: 8, background: submitting ? '#ccc' : 'linear-gradient(135deg, #0a2e14, #1a7a3c)', color: '#fff', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', border: 'none', fontSize: 14 }}
-              >
-                {submitting ? 'Submitting...' : '✅ Submit Review'}
-              </button>
+            <div className="trainee-items">
+              {loading ? (
+                <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>Loading trainees...</div>
+              ) : filtered.length === 0 ? (
+                <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                  {trainees.length === 0 ? 'No trainees assigned to you yet.' : 'No results found.'}
+                </div>
+              ) : filtered.map(t => (
+                <div
+                  key={t.id}
+                  className={`trainee-item${selected?.id === t.id ? ' active' : ''}`}
+                  onClick={() => selectTrainee(t)}
+                >
+                  <div className="trainee-avatar">
+                    {t.photo_url ? <img src={t.photo_url} alt={t.full_name} /> : '👤'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="trainee-name">{t.full_name}</div>
+                    <div className="trainee-id">{t.id_number}</div>
+                  </div>
+                  <div className="status-dot" style={{ background: t.status === 'intern' ? '#16a34a' : '#94a3b8' }} title={t.status} />
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* ── DETAIL PANEL ── */}
+          <div className={`detail-panel${!showDetail ? ' hidden-mobile' : ''}`}>
+
+            {/* Mobile back button */}
+            {showDetail && (
+              <button className="back-btn" onClick={() => setShowDetail(false)}>
+                ← Back to Trainees
+              </button>
+            )}
+
+            {!selected ? (
+              <div className="empty-state">
+                <div style={{ fontSize: 48 }}>👈</div>
+                <div style={{ fontSize: 14, color: '#94a3b8' }}>Select a trainee to view their details</div>
+              </div>
+            ) : (
+              <div>
+
+                {/* Profile card */}
+                <div className="card">
+                  <div className="profile-card">
+                    <div className="profile-photo">
+                      {selected.photo_url ? <img src={selected.photo_url} alt={selected.full_name} /> : '👤'}
+                    </div>
+                    <div style={{ flex: 1, width: '100%' }}>
+                      <div className="profile-name">{selected.full_name}</div>
+                      <div className="profile-badge">{selected.id_number}</div>
+                      <div className="profile-grid">
+                        {[
+                          ['📱 Phone', selected.phone || 'N/A'],
+                          ['🧑 Gender', selected.gender || 'N/A'],
+                          ['📍 State', selected.state_of_origin || 'N/A'],
+                          ['🎂 DOB', selected.date_of_birth || 'N/A'],
+                          ['📊 Status', selected.status?.toUpperCase() || 'N/A'],
+                          ['📧 Email', selected.email || 'N/A'],
+                        ].map(([label, value]) => (
+                          <div key={label}>
+                            <div className="profile-field-label">{label}</div>
+                            <div className="profile-field-value">{value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Internship details */}
+                <div className="card">
+                  <div className="card-title">🏢 Internship Details</div>
+                  {selected.internship_company || selected.internship_address ? (
+                    <div className="profile-grid">
+                      {[
+                        ['Company / Organisation', selected.internship_company || 'Not provided'],
+                        ['Company Address', selected.internship_address || 'Not provided'],
+                        ['Supervisor Name', selected.internship_supervisor || 'Not provided'],
+                        ['Supervisor Phone', selected.internship_supervisor_phone || 'Not provided'],
+                        ['Start Date', '22nd September 2026'],
+                        ['End Date', '18th December 2026'],
+                      ].map(([label, value]) => (
+                        <div key={label}>
+                          <div className="profile-field-label">{label}</div>
+                          <div className="profile-field-value">{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: '#94a3b8', fontStyle: 'italic' }}>
+                      This trainee has not yet provided internship company details.
+                    </div>
+                  )}
+                </div>
+
+                {/* Monthly Reviews */}
+                <div className="card">
+                  <div className="card-title">⭐ Monthly Reviews</div>
+                  <div className="reviews-grid">
+                    {MONTHS.map((month, idx) => {
+                      const review = getReview(idx + 1)
+                      return (
+                        <div key={month} className="review-card">
+                          {review && (
+                            <div className="review-bar" style={{ background: `linear-gradient(90deg, ${scoreColor(review.score)}, ${scoreColor(review.score)}88)` }} />
+                          )}
+                          <div className="review-month">{month}</div>
+                          {review ? (
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+                                <span className="review-score-big" style={{ color: scoreColor(review.score) }}>{review.score}</span>
+                                <span className="review-score-denom">/10</span>
+                              </div>
+                              <div className="review-label" style={{ color: scoreColor(review.score) }}>{scoreLabel(review.score)}</div>
+                              {review.comments && <div className="review-comment">"{review.comments}"</div>}
+                              <button className="edit-btn" onClick={() => { setReviewModal({ month, monthNumber: idx + 1 }); setScore(review.score); setComments(review.comments || '') }}>
+                                Edit Review ✏️
+                              </button>
+                            </div>
+                          ) : (
+                            <div>
+                              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 10, fontStyle: 'italic' }}>No review yet</div>
+                              <button className="add-review-btn" onClick={() => { setReviewModal({ month, monthNumber: idx + 1 }); setScore(5); setComments('') }}>
+                                + Add Review
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Logbook Entries */}
+                <div className="card">
+                  <div className="card-title">📋 Logbook Entries</div>
+                  {logbook.length === 0 ? (
+                    <div style={{ fontSize: 13, color: '#94a3b8', fontStyle: 'italic', padding: '12px 0', textAlign: 'center' }}>
+                      No logbook entries submitted yet.
+                    </div>
+                  ) : logbook.map(entry => (
+                    <div key={entry.id} className="logbook-entry">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: '#0a2e14' }}>{entry.week_title || `Week ${entry.week_number}`}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8' }}>{new Date(entry.created_at).toLocaleDateString('en-GB')}</div>
+                      </div>
+                      {entry.activities && <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, marginBottom: 4 }}>{entry.activities}</div>}
+                      {entry.skills_learned && <div style={{ fontSize: 12, color: '#64748b' }}><strong>Skills:</strong> {entry.skills_learned}</div>}
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* ── REVIEW MODAL ── */}
+        {reviewModal && (
+          <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            onClick={e => e.target === e.currentTarget && setReviewModal(null)}
+          >
+            <div style={{ background: '#fff', borderRadius: 16, padding: 24, maxWidth: 460, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#0a2e14', marginBottom: 4 }}>Monthly Review</div>
+              <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>{selected?.full_name} · {reviewModal.month}</div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 10 }}>Performance Score (1–10)</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                    <button
+                      key={n}
+                      onClick={() => setScore(n)}
+                      style={{
+                        width: 40, height: 40, borderRadius: 8,
+                        border: score === n ? `2px solid ${scoreColor(n)}` : '2px solid #e2e8f0',
+                        background: score === n ? scoreColor(n) : '#fff',
+                        color: score === n ? '#fff' : '#475569',
+                        fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                      }}
+                    >{n}</button>
+                  ))}
+                </div>
+                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: 26, fontWeight: 900, color: scoreColor(score) }}>{score}/10</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor(score) }}>{scoreLabel(score)}</div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Comments / Feedback</div>
+                <textarea
+                  value={comments}
+                  onChange={e => setComments(e.target.value)}
+                  placeholder="Describe the trainee's performance, areas of improvement, strengths observed..."
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, resize: 'vertical', minHeight: 90, outline: 'none', lineHeight: 1.6 }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => setReviewModal(null)}
+                  style={{ flex: 1, padding: '11px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
+                >Cancel</button>
+                <button
+                  onClick={submitReview}
+                  disabled={submitting}
+                  style={{ flex: 2, padding: '11px', borderRadius: 8, background: submitting ? '#ccc' : 'linear-gradient(135deg, #0a2e14, #1a7a3c)', color: '#fff', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', border: 'none', fontSize: 13 }}
+                >{submitting ? 'Submitting...' : '✅ Submit Review'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </>
   )
 }
