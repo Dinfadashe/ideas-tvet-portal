@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth.jsx'
 import { supabase } from '../../lib/supabase.js'
 import toast from 'react-hot-toast'
-import { BookOpen, ChevronDown, ChevronRight, Save, Calendar } from 'lucide-react'
+import { ChevronDown, ChevronRight, Save, Calendar, Upload, X, FileImage } from 'lucide-react'
 
 export default function StudentLogbook() {
   const { profile } = useAuth()
@@ -12,6 +12,7 @@ export default function StudentLogbook() {
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
   const [openWeeks, setOpenWeeks] = useState({ 1: true })
+  const [uploading, setUploading] = useState(null) // entry id being uploaded
 
   useEffect(() => {
     if (profile?.id) fetchEntries()
@@ -67,11 +68,79 @@ export default function StudentLogbook() {
     }
   }
 
+  async function uploadDiagram(entryId, file) {
+    // Validate file type
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+    if (!allowed.includes(file.type)) {
+      toast.error('Only JPG, PNG, WEBP or PDF files allowed.')
+      return
+    }
+    // Max 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File must be under 5MB.')
+      return
+    }
+
+    setUploading(entryId)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${profile.id}/${entryId}.${ext}`
+
+      // Remove old file first if exists
+      await supabase.storage.from('logbook-diagrams').remove([path])
+
+      const { error: uploadError } = await supabase.storage
+        .from('logbook-diagrams')
+        .upload(path, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('logbook-diagrams')
+        .getPublicUrl(path)
+
+      // Save URL to entry
+      const { error: updateError } = await supabase
+        .from('logbook_entries')
+        .update({ diagram_url: publicUrl })
+        .eq('id', entryId)
+        .eq('student_id', profile.id)
+
+      if (updateError) throw updateError
+
+      setEntries(prev => prev.map(e => e.id === entryId ? { ...e, diagram_url: publicUrl } : e))
+      toast.success('Diagram uploaded!')
+    } catch (err) {
+      toast.error('Upload failed: ' + err.message)
+    } finally {
+      setUploading(null)
+    }
+  }
+
+  async function removeDiagram(entryId, diagramUrl) {
+    try {
+      // Extract path from URL
+      const path = diagramUrl.split('/logbook-diagrams/')[1]
+      if (path) await supabase.storage.from('logbook-diagrams').remove([path])
+
+      const { error } = await supabase
+        .from('logbook_entries')
+        .update({ diagram_url: null })
+        .eq('id', entryId)
+        .eq('student_id', profile.id)
+
+      if (error) throw error
+      setEntries(prev => prev.map(e => e.id === entryId ? { ...e, diagram_url: null } : e))
+      toast.success('Diagram removed.')
+    } catch (err) {
+      toast.error('Failed to remove diagram.')
+    }
+  }
+
   function toggleWeek(w) {
     setOpenWeeks(prev => ({ ...prev, [w]: !prev[w] }))
   }
 
-  // Group by week
   const weeks = entries.reduce((acc, e) => {
     const w = e.week_number
     if (!acc[w]) acc[w] = []
@@ -84,6 +153,7 @@ export default function StudentLogbook() {
 
   return (
     <div>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 800, color: '#0a1628' }}>My Logbook</h1>
@@ -151,6 +221,8 @@ export default function StudentLogbook() {
                 const isFuture = new Date(entry.entry_date) > new Date()
                 const isFilled = entry.activities_performed?.trim()
                 const isEditing = editing === entry.id
+                const isPDF = entry.diagram_url?.toLowerCase().includes('.pdf')
+                const isUploadingThis = uploading === entry.id
 
                 return (
                   <div key={entry.id} style={{
@@ -158,7 +230,8 @@ export default function StudentLogbook() {
                     borderTop: '1px solid #f1f5f9',
                     background: isToday ? '#f0fdf4' : 'white',
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isEditing ? 16 : 0 }}>
+                    {/* Entry header row */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isEditing ? 16 : 0, flexWrap: 'wrap', gap: 8 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{
                           width: 8, height: 8, borderRadius: '50%',
@@ -166,24 +239,24 @@ export default function StudentLogbook() {
                           flexShrink: 0,
                         }} />
                         <div>
-                          <span style={{ fontWeight: 600, fontSize: 14, color: '#334155' }}>
-                            {entry.day_of_week}
-                          </span>
+                          <span style={{ fontWeight: 600, fontSize: 14, color: '#334155' }}>{entry.day_of_week}</span>
                           <span style={{ fontSize: 13, color: '#94a3b8', marginLeft: 8 }}>
                             {new Date(entry.entry_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                           {isToday && <span className="badge badge-green" style={{ fontSize: 10, marginLeft: 8 }}>Today</span>}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         {isFilled && !isEditing && (
                           <span className="badge badge-green" style={{ fontSize: 10 }}>✓ Saved</span>
                         )}
+                        {entry.diagram_url && !isEditing && (
+                          <span style={{ fontSize: 10, background: '#eff6ff', color: '#3b82f6', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
+                            📎 Diagram
+                          </span>
+                        )}
                         {!isFuture && !isEditing && (
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={() => startEditing(entry)}
-                          >
+                          <button className="btn btn-outline btn-sm" onClick={() => startEditing(entry)}>
                             {isFilled ? 'Edit' : 'Fill Entry'}
                           </button>
                         )}
@@ -204,9 +277,90 @@ export default function StudentLogbook() {
                             <strong>Skills:</strong> {entry.skills_acquired}
                           </div>
                         )}
+                        {entry.challenges && (
+                          <div style={{ fontSize: 13, color: '#475569' }}>
+                            <strong>Challenges:</strong> {entry.challenges}
+                          </div>
+                        )}
                         {entry.arrival_time && (
                           <div style={{ fontSize: 12, color: '#94a3b8' }}>
                             Time: {entry.arrival_time} – {entry.departure_time}
+                          </div>
+                        )}
+
+                        {/* Diagram preview */}
+                        {entry.diagram_url && (
+                          <div style={{ marginTop: 10 }}>
+                            {isPDF ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <a
+                                  href={entry.diagram_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}
+                                >
+                                  <FileImage size={14} /> View Diagram PDF
+                                </a>
+                                <button
+                                  onClick={() => removeDiagram(entry.id, entry.diagram_url)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}
+                                  title="Remove diagram"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <img
+                                  src={entry.diagram_url}
+                                  alt="Diagram"
+                                  style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer' }}
+                                  onClick={() => window.open(entry.diagram_url, '_blank')}
+                                />
+                                <button
+                                  onClick={() => removeDiagram(entry.id, entry.diagram_url)}
+                                  style={{
+                                    position: 'absolute', top: 6, right: 6,
+                                    background: 'rgba(0,0,0,0.6)', border: 'none',
+                                    borderRadius: '50%', width: 22, height: 22,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', color: '#fff'
+                                  }}
+                                  title="Remove diagram"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Upload diagram button (when entry filled, no diagram yet) */}
+                        {!entry.diagram_url && (
+                          <div style={{ marginTop: 8 }}>
+                            <label style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                              fontSize: 12, color: '#64748b', cursor: 'pointer',
+                              border: '1px dashed #cbd5e1', borderRadius: 6,
+                              padding: '5px 10px',
+                            }}>
+                              {isUploadingThis ? (
+                                <><div className="spinner dark" style={{ width: 12, height: 12 }} /> Uploading...</>
+                              ) : (
+                                <><Upload size={12} /> Attach Diagram (image or PDF)</>
+                              )}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                style={{ display: 'none' }}
+                                disabled={isUploadingThis}
+                                onChange={e => {
+                                  const file = e.target.files[0]
+                                  if (file) uploadDiagram(entry.id, file)
+                                  e.target.value = ''
+                                }}
+                              />
+                            </label>
                           </div>
                         )}
                       </div>
@@ -252,13 +406,52 @@ export default function StudentLogbook() {
                             onChange={e => setForm(p => ({ ...p, challenges: e.target.value }))}
                           />
                         </div>
+
+                        {/* Diagram upload inside edit form */}
+                        <div className="form-group">
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <FileImage size={14} /> Diagram / Sketch <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
+                          </label>
+                          {entry.diagram_url ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+                              <span style={{ fontSize: 12, color: '#3b82f6' }}>✓ Diagram attached</span>
+                              <a href={entry.diagram_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#3b82f6' }}>View</a>
+                              <button onClick={() => removeDiagram(entry.id, entry.diagram_url)} style={{ fontSize: 12, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
+                            </div>
+                          ) : (
+                            <label style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              border: '1px dashed #cbd5e1', borderRadius: 8,
+                              padding: '10px 14px', cursor: 'pointer', marginTop: 4,
+                              fontSize: 13, color: '#64748b',
+                            }}>
+                              {isUploadingThis ? (
+                                <><div className="spinner dark" style={{ width: 14, height: 14 }} /> Uploading...</>
+                              ) : (
+                                <><Upload size={14} /> Snap/scan your diagram and upload here (JPG, PNG, PDF · max 5MB)</>
+                              )}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                style={{ display: 'none' }}
+                                disabled={isUploadingThis}
+                                onChange={e => {
+                                  const file = e.target.files[0]
+                                  if (file) uploadDiagram(entry.id, file)
+                                  e.target.value = ''
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+
                         <div>
                           <button
                             className="btn btn-primary"
                             onClick={() => saveEntry(entry.id)}
                             disabled={saving}
                           >
-                            {saving ? <div className="spinner" /> : <><Save size={14} />Save Entry</>}
+                            {saving ? <div className="spinner" /> : <><Save size={14} /> Save Entry</>}
                           </button>
                         </div>
                       </div>
