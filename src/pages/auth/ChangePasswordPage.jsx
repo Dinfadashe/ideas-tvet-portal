@@ -24,13 +24,13 @@ export default function ChangePasswordPage() {
     }
     setLoading(true)
     try {
-      // Step 1: update auth password AND mark in metadata
-      await supabase.auth.updateUser({ 
+      // Step 1: update auth password
+      await supabase.auth.updateUser({
         password: newPassword,
         data: { password_changed: true }
       })
 
-      // Step 2: get current user directly from supabase (never rely on context here)
+      // Step 2: get current user
       const { data: { user: currentUser } } = await supabase.auth.getUser()
 
       // Step 3: mark password_changed in DB
@@ -39,7 +39,7 @@ export default function ChangePasswordPage() {
         .update({ password_changed: true })
         .eq('id', currentUser.id)
 
-      // Step 4: fetch role to know where to redirect
+      // Step 4: fetch role to redirect correctly
       const { data: fresh } = await supabase
         .from('profiles')
         .select('role')
@@ -48,9 +48,14 @@ export default function ChangePasswordPage() {
 
       toast.success('Password updated! Redirecting...')
 
-      // Step 5: hard redirect — bypasses React Router and all context race conditions
+      // Step 5: hard redirect by role
       setTimeout(() => {
-        const r = fresh?.role; window.location.replace(r === 'admin' ? '/admin' : r === 'instructor' ? '/instructor' : r === 'tsp' ? '/tsp/dashboard' : '/dashboard')
+        const r = fresh?.role
+        if (r === 'admin') window.location.replace('/admin')
+        else if (r === 'instructor') window.location.replace('/instructor')
+        else if (r === 'tsp') window.location.replace('/tsp/dashboard')
+        else if (r === 'me') window.location.replace('/monitoring')
+        else window.location.replace('/dashboard')
       }, 800)
     } catch (err) {
       toast.error(err.message || 'Failed to update password.')
